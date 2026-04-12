@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HLC QR Scanner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      color: white;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Full-screen video */
+    #video {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    /* UI layer on top of video */
+    #ui {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Dark surround — we draw this with box-shadow on the scan box */
+    #scan-box {
+      width: min(70vw, 70vh);
+      height: min(70vw, 70vh);
+      border: 3px solid #1565C0;
+      border-radius: 16px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* Corner marks */
+    .corner {
+      position: absolute;
+      width: 32px; height: 32px;
+      border-color: white;
+      border-style: solid;
+    }
+    .tl { top:-3px; left:-3px;  border-width:5px 0 0 5px; border-radius:8px 0 0 0; }
+    .tr { top:-3px; right:-3px; border-width:5px 5px 0 0; border-radius:0 8px 0 0; }
+    .bl { bottom:-3px; left:-3px;  border-width:0 0 5px 5px; border-radius:0 0 0 8px; }
+    .br { bottom:-3px; right:-3px; border-width:0 5px 5px 0; border-radius:0 0 8px 0; }
+
+    /* Animated scan line */
+    #scan-line {
+      position: absolute;
+      left: 10px; right: 10px; height: 3px;
+      background: linear-gradient(to right, transparent, #42a5f5, #90caf9, #42a5f5, transparent);
+      border-radius: 2px;
+      animation: scan 2s ease-in-out infinite alternate;
+    }
+    @keyframes scan {
+      from { top: 10px; }
+      to   { top: calc(100% - 13px); }
+    }
+
+    #label {
+      margin-top: 30px;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+    }
+    #sublabel {
+      margin-top: 10px;
+      font-size: 15px;
+      color: #90caf9;
+      text-align: center;
+      max-width: 300px;
+      line-height: 1.5;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    }
+
+    #cancel-btn {
+      margin-top: 32px;
+      background: rgba(0,0,0,0.65);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+      padding: 14px 32px;
+      font-size: 17px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    /* Success flash */
+    #success {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(21,101,192,0.85);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      font-size: 26px;
+      font-weight: 700;
+    }
+    #success.show { display: flex; }
+    #success .tick { font-size: 80px; }
+
+    /* Error screen */
+    #error-screen {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #111;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 20px;
+      text-align: center;
+    }
+    #error-screen.show { display: flex; }
+    #error-screen h2 { font-size: 22px; color: #ef9a9a; }
+    #error-screen p  { font-size: 15px; color: #90a4ae; line-height: 1.7; max-width: 320px; }
+    .retry-btn {
+      background: #1565C0; color: white;
+      border: none; padding: 16px 32px;
+      font-size: 17px; font-weight: 600;
+      border-radius: 10px; cursor: pointer;
+    }
+    .back-btn {
+      background: transparent; color: #90a4ae;
+      border: 2px solid #90a4ae;
+      padding: 14px 28px; font-size: 16px;
+      font-weight: 600; border-radius: 10px;
+      cursor: pointer;
+    }
+
+    canvas { display: none; }
+  </style>
+</head>
+<body>
+
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+  <div id="scan-box">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div id="scan-line"></div>
+  </div>
+  <p id="label">Align QR code inside the box</p>
+  <p id="sublabel">Hold steady &mdash; scans automatically</p>
+  <button id="cancel-btn" onclick="cancelScan()">&#8592; Cancel / Type Name</button>
+</div>
+
+<div id="success">
+  <div class="tick">&#10003;</div>
+  <div>QR Code Found!</div>
+  <div id="found-text" style="font-size:16px; color:#90caf9;"></div>
+</div>
+
+<div id="error-screen">
+  <h2>Camera Access Needed</h2>
+  <p id="error-msg">
+    Please tap <b>Allow</b> when Safari asks for camera access.<br><br>
+    If you already denied it, go to:<br>
+    <b>Settings &rarr; Safari &rarr; Camera</b><br>
+    and set it to <b>Allow</b>, then tap Try Again.
+  </p>
+  <button class="retry-btn" onclick="startCamera()">Try Again</button>
+  <button class="back-btn"  onclick="cancelScan()">Type Name Instead</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+
+var video    = document.getElementById('video');
+var canvas   = document.getElementById('canvas');
+var ctx      = canvas.getContext('2d');
+var stream   = null;
+var scanning = false;
+var animId   = null;
+
+/* Get the kiosk URL to return to — passed as ?origin=... */
+var params     = new URLSearchParams(window.location.search);
+var kioskOrigin = params.get('origin') || '';  // e.g. https://script.google.com
+var kioskUrl    = params.get('kiosk')  || '';  // full kiosk URL
+
+function startCamera() {
+  document.getElementById('error-screen').classList.remove('show');
+
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: 'user',          // front camera for kiosk
+      width:  { ideal: 1280 },
+      height: { ideal: 720 }
+    },
+    audio: false
+  })
+  .then(function(s) {
+    stream   = s;
+    scanning = true;
+    video.srcObject = s;
+    video.play();
+    video.addEventListener('loadedmetadata', function() {
+      scanLoop();
+    });
+  })
+  .catch(function(err) {
+    console.error(err.name, err.message);
+    var msg = document.getElementById('error-msg');
+    if (err.name === 'NotAllowedError') {
+      msg.innerHTML = 'Camera access was denied.<br><br>Go to:<br><b>Settings &rarr; Safari &rarr; Camera</b><br>set to <b>Allow</b>, then tap Try Again.';
+    } else if (err.name === 'NotFoundError') {
+      msg.innerHTML = 'No camera found on this device.';
+    } else {
+      msg.innerHTML = 'Camera error: ' + err.message;
+    }
+    document.getElementById('error-screen').classList.add('show');
+  });
+}
+
+function scanLoop() {
+  if (!scanning) return;
+
+  if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+    /* Only scan the centre region that maps to the on-screen guide box */
+    var vw   = video.videoWidth;
+    var vh   = video.videoHeight;
+    var size = Math.round(Math.min(vw, vh) * 0.70);
+    var sx   = Math.round((vw - size) / 2);
+    var sy   = Math.round((vh - size) / 2);
+
+    canvas.width  = size;
+    canvas.height = size;
+    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+
+    var imgData = ctx.getImageData(0, 0, size, size);
+    var result  = jsQR(imgData.data, size, size, { inversionAttempts: 'dontInvert' });
+
+    if (result && result.data) {
+      onFound(result.data.trim());
+      return;
+    }
+  }
+
+  animId = requestAnimationFrame(scanLoop);
+}
+
+function onFound(text) {
+  scanning = false;
+  cancelAnimationFrame(animId);
+  stopCamera();
+
+  document.getElementById('found-text').textContent = text;
+  document.getElementById('success').classList.add('show');
+
+  /* Send result back to the kiosk via postMessage AND via URL param fallback */
+  setTimeout(function() {
+    /* Method 1: postMessage to opener (works if popup) */
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.postMessage({ type: 'QR_RESULT', text: text }, '*');
+      } catch(e) {}
+      setTimeout(function() { window.close(); }, 300);
+      return;
+    }
+
+    /* Method 2: redirect back to kiosk URL with result as param */
+    if (kioskUrl) {
+      var sep = kioskUrl.indexOf('?') >= 0 ? '&' : '?';
+      window.location.href = kioskUrl + sep + 'qr=' + encodeURIComponent(text);
+      return;
+    }
+
+    /* Method 3: just close — user will type name */
+    window.close();
+  }, 800);
+}
+
+function cancelScan() {
+  scanning = false;
+  cancelAnimationFrame(animId);
+  stopCamera();
+
+  if (window.opener && !window.opener.closed) {
+    try { window.opener.postMessage({ type: 'QR_CANCEL' }, '*'); } catch(e) {}
+    window.close();
+    return;
+  }
+  if (kioskUrl) {
+    window.location.href = kioskUrl;
+    return;
+  }
+  window.close();
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(function(t) { t.stop(); });
+    stream = null;
+  }
+  video.srcObject = null;
+}
+
+/* Boot */
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  document.getElementById('error-screen').classList.add('show');
+  document.getElementById('error-msg').textContent = 'Camera not supported. Please use Safari on iPad.';
+} else {
+  startCamera();
+}
+</script>
+</body>
+</html>
