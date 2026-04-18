@@ -1,39 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HLC Admin</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d2b5e; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .card { background: white; border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 900px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
-    h1 { font-size: 26px; font-weight: 700; color: #0d2b5e; margin-bottom: 6px; }
-    h2 { font-size: 20px; font-weight: 700; color: #0d2b5e; margin-bottom: 14px; }
-    h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 10px; }
-    p  { font-size: 14px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
-    button { display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
-    .blue { background: #1565C0; color: white; }
-    .red  { background: #c62828; color: white; }
-    input[type="password"] { width: 100%; max-width: 320px; padding: 14px 18px; font-size: 16px; border: 2px solid #cbd5e1; border-radius: 10px; margin: 8px 0 4px; display: block; outline: none; }
-    input[type="password"]:focus { border-color: #1565C0; }
-    .err { color: #c62828; font-size: 14px; margin-top: 6px; min-height: 20px; }
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
-    .stat-card { background: #f0f4f8; border-radius: 12px; padding: 18px; text-align: center; }
-    .stat-num { font-size: 36px; font-weight: 700; color: #1565C0; }
-    .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th { background: #1565C0; color: white; padding: 10px 12px; text-align: left; font-size: 13px; }
-    td { padding: 9px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
-    tr:last-child td { border-bottom: none; }
-    tr:nth-child(even) td { background: #f8fafc; }
-    .bar { height: 8px; background: #1565C0; border-radius: 4px; min-width: 4px; }
-    .overflow { overflow-x: auto; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .green { background: #e8f5e9; color: #2e7d32; }
-    .gray  { background: #f0f4f8; color: #64748b; }
-    #msg { font-size: 13px; color: #64748b; margin-top: 12px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HLC Admin</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d2b5e; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.card { background: white; border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 900px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
+h1 { font-size: 26px; font-weight: 700; color: #0d2b5e; margin-bottom: 6px; }
+h2 { font-size: 20px; font-weight: 700; color: #0d2b5e; margin-bottom: 14px; }
+h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 10px; }
+p { font-size: 14px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+button { display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
+.blue { background: #1565C0; color: white; }
+.red { background: #c62828; color: white; }
+input[type="password"] { width: 100%; max-width: 320px; padding: 14px 18px; font-size: 16px; border: 2px solid #cbd5e1; border-radius: 10px; margin: 8px 0 4px; display: block; outline: none; }
+input[type="password"]:focus { border-color: #1565C0; }
+.err { color: #c62828; font-size: 14px; margin-top: 6px; min-height: 20px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: #f0f4f8; border-radius: 12px; padding: 18px; text-align: center; }
+.stat-num { font-size: 36px; font-weight: 700; color: #1565C0; }
+.stat-label { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+th { background: #1565C0; color: white; padding: 10px 12px; text-align: left; font-size: 13px; }
+td { padding: 9px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: #f8fafc; }
+.bar { height: 8px; background: #1565C0; border-radius: 4px; min-width: 4px; }
+.overflow { overflow-x: auto; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.green { background: #e8f5e9; color: #2e7d32; }
+.gray { background: #f0f4f8; color: #64748b; }
+#msg { font-size: 13px; color: #64748b; margin-top: 12px; }
+</style>
 </head>
 <body>
 
@@ -57,7 +57,7 @@
       </div>
       <div>
         <button class="blue" onclick="loadStats()">Refresh</button>
-        <button class="red"  onclick="doLogout()">Sign Out</button>
+        <button class="red" onclick="doLogout()">Sign Out</button>
       </div>
     </div>
 
@@ -71,7 +71,7 @@
 
     <h3>Area Usage Today</h3>
     <table><thead><tr><th>Area</th><th>Count</th><th>Bar</th></tr></thead>
-      <tbody id="areaBody"><tr><td colspan="3" style="color:#94a3b8;text-align:center;">--</td></tr></tbody>
+    <tbody id="areaBody"><tr><td colspan="3" style="color:#94a3b8;text-align:center;">--</td></tr></tbody>
     </table>
 
     <h3 style="margin-top:28px;">Daily Totals History</h3>
@@ -90,14 +90,13 @@
     <button class="blue" onclick="loadMembers()">Load Member List</button>
     <div id="memberListStatus" style="font-size:14px;color:#64748b;margin-top:8px;"></div>
     <div id="memberList" style="margin-top:8px;"></div>
-
     <div id="msg"></div>
   </div>
 </div>
 
 <script>
-var PASS    = 'hlc2026';
-var API_URL = 'https://script.google.com/macros/s/AKfycbw1WEnQZlyDwm65G_lFBWRGWBVS29eFQUxlbgfnoj4tp2RFK1Zgkj5pxjhX42jULrci/exec';
+var PASS = 'hlc2026';
+var API_URL = 'https://script.google.com/macros/s/AKfycbyhfL9HqO08sd5lwMWImuENbBENLmAHcULYurQgCtK_cjcv0grTwUK7tkUVsB_LzdaF/exec';
 
 function doLogin() {
   var pw = document.getElementById('pw').value.trim();
@@ -118,7 +117,6 @@ function doLogout() {
   document.getElementById('pw').value = '';
 }
 
-// Also allow Enter key on password field
 document.getElementById('pw').onkeydown = function(e) {
   if (e.key === 'Enter') doLogin();
 };
@@ -130,37 +128,37 @@ function loadStats() {
 }
 
 function gotStats(data) {
-  document.getElementById('sTot').textContent = data.totalPeople   || 0;
-  document.getElementById('sCi').textContent  = data.totalCheckins || 0;
-  document.getElementById('sMem').textContent = data.memberPeople  || 0;
-  document.getElementById('sGst').textContent = data.guestPeople   || 0;
-  document.getElementById('msg').textContent  = 'Updated: ' + new Date().toLocaleTimeString();
+  document.getElementById('sTot').textContent = data.totalPeople || 0;
+  document.getElementById('sCi').textContent = data.totalCheckins || 0;
+  document.getElementById('sMem').textContent = data.memberPeople || 0;
+  document.getElementById('sGst').textContent = data.guestPeople || 0;
+  document.getElementById('msg').textContent = 'Updated: ' + new Date().toLocaleTimeString();
 
   var areas = data.areas || {};
-  var keys  = Object.keys(areas).sort(function(a,b){ return areas[b]-areas[a]; });
-  var max   = keys.length ? areas[keys[0]] : 1;
+  var keys = Object.keys(areas).sort(function(a,b){ return areas[b]-areas[a]; });
+  var max = keys.length ? areas[keys[0]] : 1;
   document.getElementById('areaBody').innerHTML = keys.length ? keys.map(function(k) {
     var w = Math.max(4, Math.round((areas[k]/max)*180));
     return '<tr><td style="font-weight:600;">' + k + '</td>' +
-           '<td style="font-weight:700;color:#1565C0;width:50px;">' + areas[k] + '</td>' +
-           '<td><div class="bar" style="width:' + w + 'px;"></div></td></tr>';
+      '<td style="font-weight:700;color:#1565C0;width:50px;">' + areas[k] + '</td>' +
+      '<td><div class="bar" style="width:' + w + 'px;"></div></td></tr>';
   }).join('') : '<tr><td colspan="3" style="color:#94a3b8;text-align:center;">No area data today.</td></tr>';
 
   var hist = (data.history || []).slice().reverse();
   document.getElementById('histBody').innerHTML = hist.length ? hist.map(function(h) {
     return '<tr>' +
       '<td style="font-weight:600;white-space:nowrap;">' + h.date + '</td>' +
-      '<td style="text-align:center;">' + (h.members||0)  + '</td>' +
-      '<td style="text-align:center;">' + (h.guests||0)   + '</td>' +
+      '<td style="text-align:center;">' + (h.members||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.guests||0) + '</td>' +
       '<td style="text-align:center;font-weight:700;color:#1565C0;">' + (h.payments||0) + '</td>' +
-      '<td style="text-align:center;">' + (h.pool||0)     + '</td>' +
-      '<td style="text-align:center;">' + (h.tennis||0)   + '</td>' +
-      '<td style="text-align:center;">' + (h.pickle||0)   + '</td>' +
-      '<td style="text-align:center;">' + (h.bowling||0)  + '</td>' +
-      '<td style="text-align:center;">' + (h.event||0)    + '</td>' +
-      '<td style="text-align:center;">' + (h.pilates||0)  + '</td>' +
-      '<td style="text-align:center;">' + (h.dance||0)    + '</td>' +
-      '<td style="text-align:center;">' + (h.other||0)    + '</td>' +
+      '<td style="text-align:center;">' + (h.pool||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.tennis||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.pickle||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.bowling||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.event||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.pilates||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.dance||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.other||0) + '</td>' +
       '</tr>';
   }).join('') : '<tr><td colspan="12" style="color:#94a3b8;text-align:center;">No history yet.</td></tr>';
 }
@@ -186,10 +184,10 @@ function gotMembers(members) {
       '<td>' + m.name + '</td>' +
       '<td><span class="badge ' + (m.status==='Active'?'green':'gray') + '">' + m.status + '</span></td>' +
       '<td style="text-align:center;padding:8px;">' +
-        '<img src="' + qrUrl + '" width="80" height="80" ' +
-        'style="border:2px solid #1565C0;border-radius:6px;cursor:pointer;display:block;margin:0 auto;" ' +
-        'title="Click to open full size" ' +
-        'onclick="window.open(\'' + qrUrl + '\',\'_blank\')">' +
+      '<img src="' + qrUrl + '" width="80" height="80" ' +
+      'style="border:2px solid #1565C0;border-radius:6px;cursor:pointer;display:block;margin:0 auto;" ' +
+      'title="Click to open full size" ' +
+      'onclick="window.open(\'' + qrUrl + '\',\'_blank\')">' +
       '</td></tr>';
   });
   html += '</tbody></table>';
@@ -203,7 +201,7 @@ function jsonp(url) {
   if (old) old.parentNode.removeChild(old);
   if (_jTimer) clearTimeout(_jTimer);
   var s = document.createElement('script');
-  s.id  = '_jscript';
+  s.id = '_jscript';
   s.src = url;
   document.body.appendChild(s);
   _jTimer = setTimeout(function() {
