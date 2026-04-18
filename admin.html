@@ -221,15 +221,26 @@ function renderMembers(members) {
       '<td>' + m.name + '</td>' +
       '<td><span class="badge ' + (m.status==='Active'?'badge-green':'badge-gray') + '">' + m.status + '</span></td>' +
       '<td style="text-align:center;">' +
-        '<a href="' + qrUrl + '" target="_blank">' +
-          '<img src="' + qrUrl + '" width="70" height="70" ' +
-          'style="border:1px solid #e2e8f0;border-radius:4px;" title="Click to open full size">' +
-        '</a>' +
+        '<img src="' + qrUrl + '" width="80" height="80" ' +
+        'style="border:2px solid #1565C0;border-radius:6px;cursor:pointer;display:block;margin:0 auto;" ' +
+        'title="Click to download QR code" ' +
+        'onclick="downloadQR('' + encodeURIComponent(m.id) + '','' + encodeURIComponent(qrUrl) + '')">' +
       '</td></tr>';
   });
   html += '</tbody></table>';
-  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click any QR code to open full size — right-click to save as PNG.</p>';
+  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click any QR code to open full size. Right-click the opened image and choose Save Image to download as PNG.</p>';
   document.getElementById('memberList').innerHTML = html;
+}
+
+function downloadQR(memberId, encodedUrl) {
+  var url = decodeURIComponent(encodedUrl);
+  var id  = decodeURIComponent(memberId);
+  // Open in new tab - user can right-click to save
+  var win = window.open(url, '_blank');
+  if (!win) {
+    // If popup blocked, show the URL
+    alert('Right-click this URL to save the QR code:\n\n' + url);
+  }
 }
 
 // JSONP helper - bypasses CORS restrictions on Apps Script
