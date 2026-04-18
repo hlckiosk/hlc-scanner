@@ -146,20 +146,7 @@ function loadDashboard() {
   document.getElementById('sGst').textContent = '...';
 
   // Call Apps Script web app as a JSONP-style GET request
-  fetch(API_URL + '?action=stats', {
-    redirect: 'follow',
-    mode: 'cors',
-    headers: { 'Content-Type': 'application/json' }
-  })
-    .then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then(function(data) { renderDashboard(data); })
-    .catch(function(err) {
-      document.getElementById('statusMsg').textContent = 'Error: ' + err.message +
-        '. Make sure Apps Script is deployed as "Anyone" can access.';
-    });
+  jsonp(API_URL + '?action=stats&callback=handleStats');
 }
 
 function renderDashboard(data) {
@@ -211,21 +198,7 @@ function renderDashboard(data) {
 // ---- LOAD MEMBERS ----
 function loadMembers() {
   document.getElementById('memberList').innerHTML = '<p>Loading members...</p>';
-  fetch(API_URL + '?action=members', {
-    redirect: 'follow',
-    mode: 'cors',
-    headers: { 'Content-Type': 'application/json' }
-  })
-    .then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then(function(members) { renderMembers(members); })
-    .catch(function(err) {
-      document.getElementById('memberList').innerHTML =
-        '<p style="color:#c62828;">Error: ' + err.message +
-        '. Make sure Apps Script is deployed as Anyone can access.</p>';
-    });
+  jsonp(API_URL + '?action=members&callback=handleMembers');
 }
 
 function renderMembers(members) {
@@ -254,6 +227,31 @@ function renderMembers(members) {
   html += '</tbody></table>';
   html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click any QR code to open full size — right-click to save as PNG.</p>';
   document.getElementById('memberList').innerHTML = html;
+}
+
+// JSONP helper - bypasses CORS restrictions on Apps Script
+function jsonp(url) {
+  // Remove any previous jsonp script tags
+  var old = document.getElementById('jsonp-script');
+  if (old) old.parentNode.removeChild(old);
+
+  var script = document.createElement('script');
+  script.id  = 'jsonp-script';
+  script.src = url;
+  script.onerror = function() {
+    document.getElementById('statusMsg').textContent =
+      'Connection error. Check your Apps Script deployment.';
+  };
+  document.head.appendChild(script);
+}
+
+// Callbacks called by JSONP response
+function handleStats(data) {
+  renderDashboard(data);
+}
+
+function handleMembers(data) {
+  renderMembers(data);
 }
 </script>
 </body>
