@@ -146,11 +146,19 @@ function loadDashboard() {
   document.getElementById('sGst').textContent = '...';
 
   // Call Apps Script web app as a JSONP-style GET request
-  fetch(API_URL + '?action=stats')
-    .then(function(r) { return r.json(); })
+  fetch(API_URL + '?action=stats', {
+    redirect: 'follow',
+    mode: 'cors',
+    headers: { 'Content-Type': 'application/json' }
+  })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(function(data) { renderDashboard(data); })
     .catch(function(err) {
-      document.getElementById('statusMsg').textContent = 'Error loading data: ' + err.message;
+      document.getElementById('statusMsg').textContent = 'Error: ' + err.message +
+        '. Make sure Apps Script is deployed as "Anyone" can access.';
     });
 }
 
@@ -203,11 +211,20 @@ function renderDashboard(data) {
 // ---- LOAD MEMBERS ----
 function loadMembers() {
   document.getElementById('memberList').innerHTML = '<p>Loading members...</p>';
-  fetch(API_URL + '?action=members')
-    .then(function(r) { return r.json(); })
+  fetch(API_URL + '?action=members', {
+    redirect: 'follow',
+    mode: 'cors',
+    headers: { 'Content-Type': 'application/json' }
+  })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(function(members) { renderMembers(members); })
     .catch(function(err) {
-      document.getElementById('memberList').innerHTML = '<p style="color:#c62828;">Error: ' + err.message + '</p>';
+      document.getElementById('memberList').innerHTML =
+        '<p style="color:#c62828;">Error: ' + err.message +
+        '. Make sure Apps Script is deployed as Anyone can access.</p>';
     });
 }
 
