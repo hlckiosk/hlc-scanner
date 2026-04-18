@@ -97,15 +97,16 @@
   <h3 style="margin-top:28px;">Member QR Codes</h3>
   <p>Each QR code contains the member's ID. Click to open full size — right-click to save as PNG. Members can save to their phone camera roll.</p>
   <button class="btn btn-primary" id="loadMembersBtn">Load Member List</button>
-  <div id="memberList" style="margin-top:16px;"></div>
+  <div id="memberListStatus" style="font-size:14px;color:#64748b;margin-top:8px;"></div>
+  <div id="memberList" style="margin-top:8px;"></div>
 
   <div id="statusMsg"></div>
 </div>
 
 <script>
 // ---- CONFIG ----
-var PASS     = 'hlc2026';
-var API_URL  = 'https://script.google.com/macros/s/AKfycbxYqxixDtWwQSbyguJTeOzdMWHqpXaHKYzQZbBbaopKL05yQkqNBUHBkvSqfjmtBeSZ/exec';
+var PASS    = 'hlc2026';
+var API_URL = 'https://script.google.com/macros/s/AKfycbw1WEnQZlyDwm65G_lFBWRGWBVS29eFQUxlbgfnoj4tp2RFK1Zgkj5pxjhX42jULrci/exec';
 
 // ---- LOGIN ----
 document.getElementById('loginBtn').addEventListener('click', login);
@@ -146,7 +147,7 @@ function loadDashboard() {
   document.getElementById('sGst').textContent = '...';
 
   // Call Apps Script web app as a JSONP-style GET request
-  jsonp(API_URL + '?action=stats&callback=handleStats');
+  jsonp(API_URL + '?action=stats&callback=handleStats', 'statusMsg');
 }
 
 function renderDashboard(data) {
@@ -197,11 +198,13 @@ function renderDashboard(data) {
 
 // ---- LOAD MEMBERS ----
 function loadMembers() {
-  document.getElementById('memberList').innerHTML = '<p>Loading members...</p>';
-  jsonp(API_URL + '?action=members&callback=handleMembers');
+  document.getElementById('memberList').innerHTML = '';
+  document.getElementById('memberListStatus').textContent = 'Loading members...';
+  jsonp(API_URL + '?action=members&callback=handleMembers', 'memberListStatus');
 }
 
 function renderMembers(members) {
+  document.getElementById('memberListStatus').textContent = '';
   if (!members || !members.length) {
     document.getElementById('memberList').innerHTML = '<p style="color:#c62828;">No members found.</p>';
     return;
@@ -230,27 +233,41 @@ function renderMembers(members) {
 }
 
 // JSONP helper - bypasses CORS restrictions on Apps Script
-function jsonp(url) {
-  // Remove any previous jsonp script tags
+var jsonpTimer = null;
+
+function jsonp(url, timeoutEl) {
+  // Clear previous script tags
   var old = document.getElementById('jsonp-script');
-  if (old) old.parentNode.removeChild(old);
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (jsonpTimer) clearTimeout(jsonpTimer);
 
   var script = document.createElement('script');
   script.id  = 'jsonp-script';
   script.src = url;
   script.onerror = function() {
-    document.getElementById('statusMsg').textContent =
-      'Connection error. Check your Apps Script deployment.';
+    if (timeoutEl) document.getElementById(timeoutEl).textContent =
+      'Script load error. Check deployment.';
   };
-  document.head.appendChild(script);
+  document.body.appendChild(script);
+
+  // Timeout after 10 seconds
+  jsonpTimer = setTimeout(function() {
+    if (timeoutEl) {
+      var el = document.getElementById(timeoutEl);
+      if (el && (el.textContent === 'Loading...' || el.innerHTML.indexOf('Loading') >= 0)) {
+        el.textContent = 'Timeout - no response from server. Try refreshing.';
+      }
+    }
+  }, 10000);
 }
 
-// Callbacks called by JSONP response
 function handleStats(data) {
+  if (jsonpTimer) { clearTimeout(jsonpTimer); jsonpTimer = null; }
   renderDashboard(data);
 }
 
 function handleMembers(data) {
+  if (jsonpTimer) { clearTimeout(jsonpTimer); jsonpTimer = null; }
   renderMembers(data);
 }
 </script>
