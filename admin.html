@@ -179,7 +179,7 @@ function gotMembers(members) {
   }
   var html = '<table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th style="text-align:center;">QR Code</th></tr></thead><tbody>';
   members.forEach(function(m, i) {
-    var qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=' + encodeURIComponent(m.id) + '&choe=UTF-8';
+    var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(m.id);
     var bg = i % 2 === 0 ? '#fff' : '#f8fafc';
     html += '<tr style="background:' + bg + ';">' +
       '<td style="font-weight:600;">' + m.id + '</td>' +
