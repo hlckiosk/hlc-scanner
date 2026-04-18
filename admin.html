@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HLC Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d2b5e; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: white; border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 900px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
+    h1 { font-size: 26px; font-weight: 700; color: #0d2b5e; margin-bottom: 6px; }
+    h2 { font-size: 20px; font-weight: 700; color: #0d2b5e; margin-bottom: 14px; }
+    h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 10px; }
+    p  { font-size: 14px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+    .btn { display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: background 0.15s; margin-right: 8px; margin-bottom: 8px; }
+    .btn-primary { background: #1565C0; color: white; }
+    .btn-primary:hover { background: #1251a3; }
+    .btn-danger  { background: #c62828; color: white; }
+    .btn-danger:hover  { background: #b71c1c; }
+    input[type="password"], input[type="text"] {
+      width: 100%; max-width: 320px; padding: 14px 18px; font-size: 16px;
+      border: 2px solid #cbd5e1; border-radius: 10px; margin: 8px 0 4px;
+      display: block; outline: none; transition: border-color 0.15s;
+    }
+    input:focus { border-color: #1565C0; }
+    .error { color: #c62828; font-size: 14px; margin-top: 6px; min-height: 20px; }
+    #loginScreen  { display: block; }
+    #adminScreen  { display: none; }
+    .header-row { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat-card { background: #f0f4f8; border-radius: 12px; padding: 18px; text-align: center; }
+    .stat-num { font-size: 36px; font-weight: 700; color: #1565C0; }
+    .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { background: #1565C0; color: white; padding: 10px 12px; text-align: left; font-size: 13px; }
+    td { padding: 9px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .bar { height: 8px; background: #1565C0; border-radius: 4px; min-width: 4px; }
+    .overflow { overflow-x: auto; }
+    #statusMsg { font-size: 13px; color: #64748b; margin-top: 12px; padding: 8px 0; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-green { background: #e8f5e9; color: #2e7d32; }
+    .badge-gray  { background: #f0f4f8; color: #64748b; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="card" id="loginScreen">
+  <h1>HLC Admin Dashboard</h1>
+  <p>Enter your password to view today's stats and member QR codes.</p>
+  <input type="password" id="adminPw" placeholder="Password">
+  <div class="error" id="loginError"></div>
+  <br>
+  <button class="btn btn-primary" id="loginBtn">Sign In</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="card" id="adminScreen" style="display:none;">
+  <div class="header-row">
+    <div>
+      <h1>HLC Admin Dashboard</h1>
+      <div id="dateLabel" style="font-size:14px; color:#64748b; margin-top:4px;"></div>
+    </div>
+    <div>
+      <button class="btn btn-primary" id="refreshBtn">Refresh</button>
+      <button class="btn btn-danger"  id="logoutBtn">Sign Out</button>
+    </div>
+  </div>
+
+  <h2>Today</h2>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-num" id="sTot">--</div><div class="stat-label">Total People</div></div>
+    <div class="stat-card"><div class="stat-num" id="sCi">--</div><div class="stat-label">Check-ins</div></div>
+    <div class="stat-card"><div class="stat-num" id="sMem">--</div><div class="stat-label">Members</div></div>
+    <div class="stat-card"><div class="stat-num" id="sGst">--</div><div class="stat-label">Guests</div></div>
+  </div>
+
+  <h3>Area Usage Today</h3>
+  <table><thead><tr><th>Area</th><th>Count</th><th>Bar</th></tr></thead>
+    <tbody id="areaBody"><tr><td colspan="3" style="color:#94a3b8;text-align:center;">Loading...</td></tr></tbody>
+  </table>
+
+  <h3 style="margin-top:28px;">Daily Totals History</h3>
+  <div class="overflow">
+    <table id="histTable">
+      <thead><tr>
+        <th>Date</th><th>Members</th><th>Guests</th><th>Payments</th>
+        <th>Pool</th><th>Tennis</th><th>Pickleball</th><th>Bowling</th>
+        <th>Event</th><th>Pilates</th><th>Dance</th><th>Other</th>
+      </tr></thead>
+      <tbody id="histBody"><tr><td colspan="12" style="color:#94a3b8;text-align:center;">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:28px;">Member QR Codes</h3>
+  <p>Each QR code contains the member's ID. Click to open full size — right-click to save as PNG. Members can save to their phone camera roll.</p>
+  <button class="btn btn-primary" id="loadMembersBtn">Load Member List</button>
+  <div id="memberList" style="margin-top:16px;"></div>
+
+  <div id="statusMsg"></div>
+</div>
+
+<script>
+// ---- CONFIG ----
+var PASS     = 'hlc2026';
+var API_URL  = 'https://script.google.com/macros/s/AKfycbxYqxixDtWwQSbyguJTeOzdMWHqpXaHKYzQZbBbaopKL05yQkqNBUHBkvSqfjmtBeSZ/exec';
+
+// ---- LOGIN ----
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('adminPw').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') login();
+});
+
+function login() {
+  var pw = document.getElementById('adminPw').value.trim();
+  if (pw === PASS) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    document.getElementById('loginError').textContent = '';
+    loadDashboard();
+  } else {
+    document.getElementById('loginError').textContent = 'Incorrect password. Try again.';
+    document.getElementById('adminPw').value = '';
+    document.getElementById('adminPw').focus();
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', function() {
+  document.getElementById('adminScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'block';
+  document.getElementById('adminPw').value = '';
+});
+
+document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
+document.getElementById('loadMembersBtn').addEventListener('click', loadMembers);
+
+// ---- LOAD DASHBOARD ----
+function loadDashboard() {
+  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('statusMsg').textContent = 'Loading...';
+  document.getElementById('sTot').textContent = '...';
+  document.getElementById('sCi').textContent  = '...';
+  document.getElementById('sMem').textContent = '...';
+  document.getElementById('sGst').textContent = '...';
+
+  // Call Apps Script web app as a JSONP-style GET request
+  fetch(API_URL + '?action=stats')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { renderDashboard(data); })
+    .catch(function(err) {
+      document.getElementById('statusMsg').textContent = 'Error loading data: ' + err.message;
+    });
+}
+
+function renderDashboard(data) {
+  document.getElementById('sTot').textContent = data.totalPeople   || 0;
+  document.getElementById('sCi').textContent  = data.totalCheckins || 0;
+  document.getElementById('sMem').textContent = data.memberPeople  || 0;
+  document.getElementById('sGst').textContent = data.guestPeople   || 0;
+  document.getElementById('statusMsg').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+
+  var areas = data.areas || {};
+  var keys  = Object.keys(areas).sort(function(a,b){ return areas[b]-areas[a]; });
+  var max   = keys.length > 0 ? areas[keys[0]] : 1;
+  var ab    = document.getElementById('areaBody');
+  if (!keys.length) {
+    ab.innerHTML = '<tr><td colspan="3" style="color:#94a3b8;text-align:center;">No area data today.</td></tr>';
+  } else {
+    ab.innerHTML = keys.map(function(k) {
+      var w = Math.max(4, Math.round((areas[k]/max)*180));
+      return '<tr><td style="font-weight:600;">' + k + '</td>' +
+             '<td style="font-weight:700;color:#1565C0;width:50px;">' + areas[k] + '</td>' +
+             '<td><div class="bar" style="width:' + w + 'px;"></div></td></tr>';
+    }).join('');
+  }
+
+  var hist = data.history || [];
+  var hb   = document.getElementById('histBody');
+  if (!hist.length) {
+    hb.innerHTML = '<tr><td colspan="12" style="color:#94a3b8;text-align:center;">No history yet.</td></tr>';
+  } else {
+    hb.innerHTML = hist.slice().reverse().map(function(h) {
+      return '<tr>' +
+        '<td style="font-weight:600;white-space:nowrap;">' + h.date     + '</td>' +
+        '<td style="text-align:center;">' + h.members  + '</td>' +
+        '<td style="text-align:center;">' + h.guests   + '</td>' +
+        '<td style="text-align:center;font-weight:700;color:#1565C0;">' + h.payments + '</td>' +
+        '<td style="text-align:center;">' + (h.pool    ||0) + '</td>' +
+        '<td style="text-align:center;">' + (h.tennis  ||0) + '</td>' +
+        '<td style="text-align:center;">' + (h.pickle  ||0) + '</td>' +
+        '<td style="text-align:center;">' + (h.bowling ||0) + '</td>' +
+        '<td style="text-align:center;">' + (h.event   ||0) + '</td>' +
+        '<td style="text-align:center;">' + (h.pilates ||0) + '</td>' +
+        '<td style="text-align:center;">' + (h.dance   ||0) + '</td>' +
+        '<td style="text-align:center;">' + (h.other   ||0) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+}
+
+// ---- LOAD MEMBERS ----
+function loadMembers() {
+  document.getElementById('memberList').innerHTML = '<p>Loading members...</p>';
+  fetch(API_URL + '?action=members')
+    .then(function(r) { return r.json(); })
+    .then(function(members) { renderMembers(members); })
+    .catch(function(err) {
+      document.getElementById('memberList').innerHTML = '<p style="color:#c62828;">Error: ' + err.message + '</p>';
+    });
+}
+
+function renderMembers(members) {
+  if (!members || !members.length) {
+    document.getElementById('memberList').innerHTML = '<p style="color:#c62828;">No members found.</p>';
+    return;
+  }
+  var html = '<table><thead><tr>' +
+    '<th>ID</th><th>Name</th><th>Status</th><th style="text-align:center;">QR Code (ID)</th>' +
+    '</tr></thead><tbody>';
+  members.forEach(function(m, i) {
+    var qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=' +
+                encodeURIComponent(m.id) + '&choe=UTF-8';
+    var bg = i % 2 === 0 ? '#fff' : '#f8fafc';
+    html += '<tr style="background:' + bg + ';">' +
+      '<td style="font-weight:600;">' + m.id + '</td>' +
+      '<td>' + m.name + '</td>' +
+      '<td><span class="badge ' + (m.status==='Active'?'badge-green':'badge-gray') + '">' + m.status + '</span></td>' +
+      '<td style="text-align:center;">' +
+        '<a href="' + qrUrl + '" target="_blank">' +
+          '<img src="' + qrUrl + '" width="70" height="70" ' +
+          'style="border:1px solid #e2e8f0;border-radius:4px;" title="Click to open full size">' +
+        '</a>' +
+      '</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click any QR code to open full size — right-click to save as PNG.</p>';
+  document.getElementById('memberList').innerHTML = html;
+}
+</script>
+</body>
+</html>
