@@ -12,21 +12,12 @@
     h2 { font-size: 20px; font-weight: 700; color: #0d2b5e; margin-bottom: 14px; }
     h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 10px; }
     p  { font-size: 14px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
-    .btn { display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: background 0.15s; margin-right: 8px; margin-bottom: 8px; }
-    .btn-primary { background: #1565C0; color: white; }
-    .btn-primary:hover { background: #1251a3; }
-    .btn-danger  { background: #c62828; color: white; }
-    .btn-danger:hover  { background: #b71c1c; }
-    input[type="password"], input[type="text"] {
-      width: 100%; max-width: 320px; padding: 14px 18px; font-size: 16px;
-      border: 2px solid #cbd5e1; border-radius: 10px; margin: 8px 0 4px;
-      display: block; outline: none; transition: border-color 0.15s;
-    }
-    input:focus { border-color: #1565C0; }
-    .error { color: #c62828; font-size: 14px; margin-top: 6px; min-height: 20px; }
-    #loginScreen  { display: block; }
-    #adminScreen  { display: none; }
-    .header-row { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+    button { display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
+    .blue { background: #1565C0; color: white; }
+    .red  { background: #c62828; color: white; }
+    input[type="password"] { width: 100%; max-width: 320px; padding: 14px 18px; font-size: 16px; border: 2px solid #cbd5e1; border-radius: 10px; margin: 8px 0 4px; display: block; outline: none; }
+    input[type="password"]:focus { border-color: #1565C0; }
+    .err { color: #c62828; font-size: 14px; margin-top: 6px; min-height: 20px; }
     .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .stat-card { background: #f0f4f8; border-radius: 12px; padding: 18px; text-align: center; }
     .stat-num { font-size: 36px; font-weight: 700; color: #1565C0; }
@@ -38,258 +29,186 @@
     tr:nth-child(even) td { background: #f8fafc; }
     .bar { height: 8px; background: #1565C0; border-radius: 4px; min-width: 4px; }
     .overflow { overflow-x: auto; }
-    #statusMsg { font-size: 13px; color: #64748b; margin-top: 12px; padding: 8px 0; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .badge-green { background: #e8f5e9; color: #2e7d32; }
-    .badge-gray  { background: #f0f4f8; color: #64748b; }
+    .green { background: #e8f5e9; color: #2e7d32; }
+    .gray  { background: #f0f4f8; color: #64748b; }
+    #msg { font-size: 13px; color: #64748b; margin-top: 12px; }
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div class="card" id="loginScreen">
-  <h1>HLC Admin Dashboard</h1>
-  <p>Enter your password to view today's stats and member QR codes.</p>
-  <input type="password" id="adminPw" placeholder="Password">
-  <div class="error" id="loginError"></div>
-  <br>
-  <button class="btn btn-primary" id="loginBtn">Sign In</button>
+<div id="loginScreen">
+  <div class="card">
+    <h1>HLC Admin Dashboard</h1>
+    <p>Enter your password to continue.</p>
+    <input type="password" id="pw" placeholder="Password">
+    <div class="err" id="pwErr"></div>
+    <br>
+    <button class="blue" onclick="doLogin()">Sign In</button>
+  </div>
 </div>
 
-<!-- DASHBOARD -->
-<div class="card" id="adminScreen" style="display:none;">
-  <div class="header-row">
-    <div>
-      <h1>HLC Admin Dashboard</h1>
-      <div id="dateLabel" style="font-size:14px; color:#64748b; margin-top:4px;"></div>
+<div id="adminScreen" style="display:none;">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
+      <div>
+        <h1>HLC Admin Dashboard</h1>
+        <div id="dateStr" style="font-size:14px; color:#64748b; margin-top:4px;"></div>
+      </div>
+      <div>
+        <button class="blue" onclick="loadStats()">Refresh</button>
+        <button class="red"  onclick="doLogout()">Sign Out</button>
+      </div>
     </div>
-    <div>
-      <button class="btn btn-primary" id="refreshBtn">Refresh</button>
-      <button class="btn btn-danger"  id="logoutBtn">Sign Out</button>
+
+    <h2>Today</h2>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="sTot">--</div><div class="stat-label">Total People</div></div>
+      <div class="stat-card"><div class="stat-num" id="sCi">--</div><div class="stat-label">Check-ins</div></div>
+      <div class="stat-card"><div class="stat-num" id="sMem">--</div><div class="stat-label">Members</div></div>
+      <div class="stat-card"><div class="stat-num" id="sGst">--</div><div class="stat-label">Guests</div></div>
     </div>
-  </div>
 
-  <h2>Today</h2>
-  <div class="stat-grid">
-    <div class="stat-card"><div class="stat-num" id="sTot">--</div><div class="stat-label">Total People</div></div>
-    <div class="stat-card"><div class="stat-num" id="sCi">--</div><div class="stat-label">Check-ins</div></div>
-    <div class="stat-card"><div class="stat-num" id="sMem">--</div><div class="stat-label">Members</div></div>
-    <div class="stat-card"><div class="stat-num" id="sGst">--</div><div class="stat-label">Guests</div></div>
-  </div>
+    <h3>Area Usage Today</h3>
+    <table><thead><tr><th>Area</th><th>Count</th><th>Bar</th></tr></thead>
+      <tbody id="areaBody"><tr><td colspan="3" style="color:#94a3b8;text-align:center;">--</td></tr></tbody>
+    </table>
 
-  <h3>Area Usage Today</h3>
-  <table><thead><tr><th>Area</th><th>Count</th><th>Bar</th></tr></thead>
-    <tbody id="areaBody"><tr><td colspan="3" style="color:#94a3b8;text-align:center;">Loading...</td></tr></tbody>
-  </table>
-
-  <h3 style="margin-top:28px;">Daily Totals History</h3>
-  <div class="overflow">
-    <table id="histTable">
-      <thead><tr>
+    <h3 style="margin-top:28px;">Daily Totals History</h3>
+    <div class="overflow">
+      <table><thead><tr>
         <th>Date</th><th>Members</th><th>Guests</th><th>Payments</th>
         <th>Pool</th><th>Tennis</th><th>Pickleball</th><th>Bowling</th>
         <th>Event</th><th>Pilates</th><th>Dance</th><th>Other</th>
       </tr></thead>
-      <tbody id="histBody"><tr><td colspan="12" style="color:#94a3b8;text-align:center;">Loading...</td></tr></tbody>
-    </table>
+      <tbody id="histBody"><tr><td colspan="12" style="color:#94a3b8;text-align:center;">--</td></tr></tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:28px;">Member QR Codes</h3>
+    <p>Click any QR code to open full size. Right-click and Save Image to download as PNG for members.</p>
+    <button class="blue" onclick="loadMembers()">Load Member List</button>
+    <div id="memberListStatus" style="font-size:14px;color:#64748b;margin-top:8px;"></div>
+    <div id="memberList" style="margin-top:8px;"></div>
+
+    <div id="msg"></div>
   </div>
-
-  <h3 style="margin-top:28px;">Member QR Codes</h3>
-  <p>Each QR code contains the member's ID. Click to open full size — right-click to save as PNG. Members can save to their phone camera roll.</p>
-  <button class="btn btn-primary" id="loadMembersBtn">Load Member List</button>
-  <div id="memberListStatus" style="font-size:14px;color:#64748b;margin-top:8px;"></div>
-  <div id="memberList" style="margin-top:8px;"></div>
-
-  <div id="statusMsg"></div>
 </div>
 
 <script>
-// ---- CONFIG ----
 var PASS    = 'hlc2026';
 var API_URL = 'https://script.google.com/macros/s/AKfycbw1WEnQZlyDwm65G_lFBWRGWBVS29eFQUxlbgfnoj4tp2RFK1Zgkj5pxjhX42jULrci/exec';
 
-// ---- LOGIN ----
-function login() {
-  var pw = document.getElementById('adminPw').value.trim();
+function doLogin() {
+  var pw = document.getElementById('pw').value.trim();
   if (pw === PASS) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminScreen').style.display = 'block';
-    document.getElementById('loginError').textContent = '';
-    loadDashboard();
+    document.getElementById('pwErr').textContent = '';
+    loadStats();
   } else {
-    document.getElementById('loginError').textContent = 'Incorrect password. Try again.';
-    document.getElementById('adminPw').value = '';
-    document.getElementById('adminPw').focus();
+    document.getElementById('pwErr').textContent = 'Incorrect password.';
+    document.getElementById('pw').value = '';
   }
 }
 
-function logout() {
+function doLogout() {
   document.getElementById('adminScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'block';
-  document.getElementById('adminPw').value = '';
+  document.getElementById('pw').value = '';
 }
 
-// Wire all buttons safely after page loads
-window.onload = function() {
-  var lb = document.getElementById('loginBtn');
-  if (lb) lb.addEventListener('click', login);
-
-  var pw = document.getElementById('adminPw');
-  if (pw) pw.addEventListener('keydown', function(e) { if (e.key==='Enter') login(); });
-
-  var lo = document.getElementById('logoutBtn');
-  if (lo) lo.addEventListener('click', logout);
-
-  var rb = document.getElementById('refreshBtn');
-  if (rb) rb.addEventListener('click', loadDashboard);
-
-  var lm = document.getElementById('loadMembersBtn');
-  if (lm) lm.addEventListener('click', loadMembers);
+// Also allow Enter key on password field
+document.getElementById('pw').onkeydown = function(e) {
+  if (e.key === 'Enter') doLogin();
 };
 
-// ---- LOAD DASHBOARD ----
-function loadDashboard() {
-  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-  document.getElementById('statusMsg').textContent = 'Loading...';
-  document.getElementById('sTot').textContent = '...';
-  document.getElementById('sCi').textContent  = '...';
-  document.getElementById('sMem').textContent = '...';
-  document.getElementById('sGst').textContent = '...';
-
-  // Call Apps Script web app as a JSONP-style GET request
-  jsonp(API_URL + '?action=stats&callback=handleStats', 'statusMsg');
+function loadStats() {
+  document.getElementById('dateStr').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('msg').textContent = 'Loading...';
+  jsonp(API_URL + '?action=stats&callback=gotStats');
 }
 
-function renderDashboard(data) {
+function gotStats(data) {
   document.getElementById('sTot').textContent = data.totalPeople   || 0;
   document.getElementById('sCi').textContent  = data.totalCheckins || 0;
   document.getElementById('sMem').textContent = data.memberPeople  || 0;
   document.getElementById('sGst').textContent = data.guestPeople   || 0;
-  document.getElementById('statusMsg').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+  document.getElementById('msg').textContent  = 'Updated: ' + new Date().toLocaleTimeString();
 
   var areas = data.areas || {};
   var keys  = Object.keys(areas).sort(function(a,b){ return areas[b]-areas[a]; });
-  var max   = keys.length > 0 ? areas[keys[0]] : 1;
-  var ab    = document.getElementById('areaBody');
-  if (!keys.length) {
-    ab.innerHTML = '<tr><td colspan="3" style="color:#94a3b8;text-align:center;">No area data today.</td></tr>';
-  } else {
-    ab.innerHTML = keys.map(function(k) {
-      var w = Math.max(4, Math.round((areas[k]/max)*180));
-      return '<tr><td style="font-weight:600;">' + k + '</td>' +
-             '<td style="font-weight:700;color:#1565C0;width:50px;">' + areas[k] + '</td>' +
-             '<td><div class="bar" style="width:' + w + 'px;"></div></td></tr>';
-    }).join('');
-  }
+  var max   = keys.length ? areas[keys[0]] : 1;
+  document.getElementById('areaBody').innerHTML = keys.length ? keys.map(function(k) {
+    var w = Math.max(4, Math.round((areas[k]/max)*180));
+    return '<tr><td style="font-weight:600;">' + k + '</td>' +
+           '<td style="font-weight:700;color:#1565C0;width:50px;">' + areas[k] + '</td>' +
+           '<td><div class="bar" style="width:' + w + 'px;"></div></td></tr>';
+  }).join('') : '<tr><td colspan="3" style="color:#94a3b8;text-align:center;">No area data today.</td></tr>';
 
-  var hist = data.history || [];
-  var hb   = document.getElementById('histBody');
-  if (!hist.length) {
-    hb.innerHTML = '<tr><td colspan="12" style="color:#94a3b8;text-align:center;">No history yet.</td></tr>';
-  } else {
-    hb.innerHTML = hist.slice().reverse().map(function(h) {
-      return '<tr>' +
-        '<td style="font-weight:600;white-space:nowrap;">' + h.date     + '</td>' +
-        '<td style="text-align:center;">' + h.members  + '</td>' +
-        '<td style="text-align:center;">' + h.guests   + '</td>' +
-        '<td style="text-align:center;font-weight:700;color:#1565C0;">' + h.payments + '</td>' +
-        '<td style="text-align:center;">' + (h.pool    ||0) + '</td>' +
-        '<td style="text-align:center;">' + (h.tennis  ||0) + '</td>' +
-        '<td style="text-align:center;">' + (h.pickle  ||0) + '</td>' +
-        '<td style="text-align:center;">' + (h.bowling ||0) + '</td>' +
-        '<td style="text-align:center;">' + (h.event   ||0) + '</td>' +
-        '<td style="text-align:center;">' + (h.pilates ||0) + '</td>' +
-        '<td style="text-align:center;">' + (h.dance   ||0) + '</td>' +
-        '<td style="text-align:center;">' + (h.other   ||0) + '</td>' +
-        '</tr>';
-    }).join('');
-  }
+  var hist = (data.history || []).slice().reverse();
+  document.getElementById('histBody').innerHTML = hist.length ? hist.map(function(h) {
+    return '<tr>' +
+      '<td style="font-weight:600;white-space:nowrap;">' + h.date + '</td>' +
+      '<td style="text-align:center;">' + (h.members||0)  + '</td>' +
+      '<td style="text-align:center;">' + (h.guests||0)   + '</td>' +
+      '<td style="text-align:center;font-weight:700;color:#1565C0;">' + (h.payments||0) + '</td>' +
+      '<td style="text-align:center;">' + (h.pool||0)     + '</td>' +
+      '<td style="text-align:center;">' + (h.tennis||0)   + '</td>' +
+      '<td style="text-align:center;">' + (h.pickle||0)   + '</td>' +
+      '<td style="text-align:center;">' + (h.bowling||0)  + '</td>' +
+      '<td style="text-align:center;">' + (h.event||0)    + '</td>' +
+      '<td style="text-align:center;">' + (h.pilates||0)  + '</td>' +
+      '<td style="text-align:center;">' + (h.dance||0)    + '</td>' +
+      '<td style="text-align:center;">' + (h.other||0)    + '</td>' +
+      '</tr>';
+  }).join('') : '<tr><td colspan="12" style="color:#94a3b8;text-align:center;">No history yet.</td></tr>';
 }
 
-// ---- LOAD MEMBERS ----
 function loadMembers() {
   document.getElementById('memberList').innerHTML = '';
   document.getElementById('memberListStatus').textContent = 'Loading members...';
-  jsonp(API_URL + '?action=members&callback=handleMembers', 'memberListStatus');
+  jsonp(API_URL + '?action=members&callback=gotMembers');
 }
 
-function renderMembers(members) {
+function gotMembers(members) {
   document.getElementById('memberListStatus').textContent = '';
   if (!members || !members.length) {
     document.getElementById('memberList').innerHTML = '<p style="color:#c62828;">No members found.</p>';
     return;
   }
-  var html = '<table><thead><tr>' +
-    '<th>ID</th><th>Name</th><th>Status</th><th style="text-align:center;">QR Code (ID)</th>' +
-    '</tr></thead><tbody>';
+  var html = '<table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th style="text-align:center;">QR Code</th></tr></thead><tbody>';
   members.forEach(function(m, i) {
-    var qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=' +
-                encodeURIComponent(m.id) + '&choe=UTF-8';
+    var qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=' + encodeURIComponent(m.id) + '&choe=UTF-8';
     var bg = i % 2 === 0 ? '#fff' : '#f8fafc';
     html += '<tr style="background:' + bg + ';">' +
       '<td style="font-weight:600;">' + m.id + '</td>' +
       '<td>' + m.name + '</td>' +
-      '<td><span class="badge ' + (m.status==='Active'?'badge-green':'badge-gray') + '">' + m.status + '</span></td>' +
-      '<td style="text-align:center;">' +
+      '<td><span class="badge ' + (m.status==='Active'?'green':'gray') + '">' + m.status + '</span></td>' +
+      '<td style="text-align:center;padding:8px;">' +
         '<img src="' + qrUrl + '" width="80" height="80" ' +
         'style="border:2px solid #1565C0;border-radius:6px;cursor:pointer;display:block;margin:0 auto;" ' +
-        'title="Click to download QR code" ' +
-        'onclick="downloadQR('' + encodeURIComponent(m.id) + '','' + encodeURIComponent(qrUrl) + '')">' +
+        'title="Click to open full size" ' +
+        'onclick="window.open(\'' + qrUrl + '\',\'_blank\')">' +
       '</td></tr>';
   });
   html += '</tbody></table>';
-  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click any QR code to open full size. Right-click the opened image and choose Save Image to download as PNG.</p>';
+  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click QR to open full size. Right-click → Save Image to download PNG.</p>';
   document.getElementById('memberList').innerHTML = html;
 }
 
-function downloadQR(memberId, encodedUrl) {
-  var url = decodeURIComponent(encodedUrl);
-  var id  = decodeURIComponent(memberId);
-  // Open in new tab - user can right-click to save
-  var win = window.open(url, '_blank');
-  if (!win) {
-    // If popup blocked, show the URL
-    alert('Right-click this URL to save the QR code:\n\n' + url);
-  }
-}
-
-// JSONP helper - bypasses CORS restrictions on Apps Script
-var jsonpTimer = null;
-
-function jsonp(url, timeoutEl) {
-  // Clear previous script tags
-  var old = document.getElementById('jsonp-script');
-  if (old && old.parentNode) old.parentNode.removeChild(old);
-  if (jsonpTimer) clearTimeout(jsonpTimer);
-
-  var script = document.createElement('script');
-  script.id  = 'jsonp-script';
-  script.src = url;
-  script.onerror = function() {
-    if (timeoutEl) document.getElementById(timeoutEl).textContent =
-      'Script load error. Check deployment.';
-  };
-  document.body.appendChild(script);
-
-  // Timeout after 10 seconds
-  jsonpTimer = setTimeout(function() {
-    if (timeoutEl) {
-      var el = document.getElementById(timeoutEl);
-      if (el && (el.textContent === 'Loading...' || el.innerHTML.indexOf('Loading') >= 0)) {
-        el.textContent = 'Timeout - no response from server. Try refreshing.';
-      }
-    }
-  }, 10000);
-}
-
-function handleStats(data) {
-  if (jsonpTimer) { clearTimeout(jsonpTimer); jsonpTimer = null; }
-  renderDashboard(data);
-}
-
-function handleMembers(data) {
-  if (jsonpTimer) { clearTimeout(jsonpTimer); jsonpTimer = null; }
-  renderMembers(data);
+var _jTimer = null;
+function jsonp(url) {
+  var old = document.getElementById('_jscript');
+  if (old) old.parentNode.removeChild(old);
+  if (_jTimer) clearTimeout(_jTimer);
+  var s = document.createElement('script');
+  s.id  = '_jscript';
+  s.src = url;
+  document.body.appendChild(s);
+  _jTimer = setTimeout(function() {
+    document.getElementById('msg').textContent = 'No response from server. Check deployment.';
+  }, 12000);
 }
 </script>
 </body>
