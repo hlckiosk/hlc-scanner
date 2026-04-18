@@ -109,11 +109,6 @@ var PASS    = 'hlc2026';
 var API_URL = 'https://script.google.com/macros/s/AKfycbw1WEnQZlyDwm65G_lFBWRGWBVS29eFQUxlbgfnoj4tp2RFK1Zgkj5pxjhX42jULrci/exec';
 
 // ---- LOGIN ----
-document.getElementById('loginBtn').addEventListener('click', login);
-document.getElementById('adminPw').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') login();
-});
-
 function login() {
   var pw = document.getElementById('adminPw').value.trim();
   if (pw === PASS) {
@@ -128,14 +123,29 @@ function login() {
   }
 }
 
-document.getElementById('logoutBtn').addEventListener('click', function() {
+function logout() {
   document.getElementById('adminScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'block';
   document.getElementById('adminPw').value = '';
-});
+}
 
-document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
-document.getElementById('loadMembersBtn').addEventListener('click', loadMembers);
+// Wire all buttons safely after page loads
+window.onload = function() {
+  var lb = document.getElementById('loginBtn');
+  if (lb) lb.addEventListener('click', login);
+
+  var pw = document.getElementById('adminPw');
+  if (pw) pw.addEventListener('keydown', function(e) { if (e.key==='Enter') login(); });
+
+  var lo = document.getElementById('logoutBtn');
+  if (lo) lo.addEventListener('click', logout);
+
+  var rb = document.getElementById('refreshBtn');
+  if (rb) rb.addEventListener('click', loadDashboard);
+
+  var lm = document.getElementById('loadMembersBtn');
+  if (lm) lm.addEventListener('click', loadMembers);
+};
 
 // ---- LOAD DASHBOARD ----
 function loadDashboard() {
