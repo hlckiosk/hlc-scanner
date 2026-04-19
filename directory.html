@@ -85,7 +85,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #
 <!-- DIRECTORY -->
 <div id="dirScreen">
   <div class="top-bar">
-    <img src="https://i.imgur.com/iexv8G2.png" alt="High Lane Club" />
+    <img src="https://i.imgur.com/iexv8G2.png" alt="High Lane Club" style="filter: brightness(0) invert(1);" />
     <div class="top-bar-right">
       <span style="color:rgba(255,255,255,0.7);font-size:13px;">Member Directory</span>
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
@@ -103,6 +103,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #
         <button class="filter-btn" data-interest="Pickleball" onclick="toggleFilter(this)">Pickleball</button>
         <button class="filter-btn" data-interest="Events" onclick="toggleFilter(this)">Events</button>
         <button class="filter-btn clear-btn" onclick="clearFilters()">Clear filters</button>
+        <button class="filter-btn" onclick="viewAll()" id="viewAllBtn" style="margin-left:8px;border-color:#0d2b5e;color:#0d2b5e;">View all members</button>
       </div>
     </div>
   </div>
@@ -314,6 +315,15 @@ function row(label, val) {
   if (!val) return '';
   return '<div class="card-row"><span class="card-row-label">' + label + '</span>' +
     '<span class="card-row-val">' + val + '</span></div>';
+}
+
+function viewAll() {
+  document.getElementById('searchBox').value = '';
+  activeFilters = [];
+  document.querySelectorAll('.filter-btn[data-interest]').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  renderCards();
 }
 
 var _jTimer = null;
