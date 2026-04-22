@@ -102,7 +102,7 @@ tr:nth-child(even) td { background: #f8fafc; }
         <table>
           <thead><tr>
             <th>Time</th><th>Name</th><th>Member ID</th><th>Status</th>
-            <th>Family</th><th>Area</th><th>Guests</th><th>Guest Names</th><th>Payment</th>
+            <th>Family</th><th>Area</th><th>Guests</th><th>Guest Names</th><th>Payment / Pass</th>
           </tr></thead>
           <tbody id="checkinTableBody">
             <tr><td colspan="9" style="color:#94a3b8;text-align:center;">Click to load</td></tr>
@@ -148,6 +148,38 @@ tr:nth-child(even) td { background: #f8fafc; }
     </div>
 
     <div id="msg"></div>
+  </div>
+</div>
+
+<!-- USE PASS MODAL -->
+<div id="usePassModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:32px;max-width:420px;width:90%;margin:auto;">
+    <h2 style="margin-bottom:16px;">Use Guest Pass</h2>
+    <p style="margin-bottom:8px;font-size:14px;color:#64748b;">Member: <strong id="modalMemberName"></strong> (ID: <span id="modalMemberId"></span>)</p>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Pass type</label>
+      <select id="modalPassType" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;">
+        <option value="single">Single Pass (1 guest)</option>
+        <option value="family">Family Pass (up to 6 guests)</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Number of guests</label>
+      <input type="number" id="modalGuestCount" min="1" max="6" value="1" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;" />
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Guest name(s)</label>
+      <input type="text" id="modalGuestNames" placeholder="e.g. Jane Smith, John Doe" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;" />
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Area(s)</label>
+      <input type="text" id="modalArea" placeholder="e.g. Pool, Tennis" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;" />
+    </div>
+    <div id="modalError" style="color:#c62828;font-size:13px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="blue" style="flex:1;" onclick="confirmUsePass()">Use Pass &amp; Check In</button>
+      <button onclick="closeModal()" style="flex:1;background:#f0f4f8;color:#334155;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -234,6 +266,17 @@ function loadCheckins() {
   jsonp(API_URL + '?action=checkins&callback=gotCheckins');
 }
 
+function getPaymentLabel(r) {
+  var passUsed = r[10] ? String(r[10]) : '';
+  if (passUsed && passUsed.toLowerCase().indexOf('pass') > -1) {
+    return '<span class="badge" style="background:#e8f0fe;color:#1565C0;">Prepaid: ' + passUsed + '</span>';
+  }
+  if (r[8] === 'Yes') {
+    return '<span class="badge" style="background:#fef3c7;color:#92400e;">Payment link</span>';
+  }
+  return '';
+}
+
 function gotCheckins(data) {
   var rows = data.rows || [];
   if (!rows.length) {
@@ -255,7 +298,7 @@ function gotCheckins(data) {
       '<td>'                             + (r[5]||'—')    + '</td>' +
       '<td style="text-align:center;">'  + (r[6]||'0')   + '</td>' +
       '<td>'                             + (r[7]||'—')    + '</td>' +
-      '<td>'                             + payBadge        + '</td>' +
+      '<td>' + getPaymentLabel(r) + '</td>' +
       '</tr>';
   }).join('');
   document.getElementById('checkinCount').textContent = rows.length;
@@ -358,6 +401,7 @@ function renderPasses(list) {
         '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'family\',1)">+</button>' +
       '</div>' +
       '<button class="hist-btn" style="margin-left:10px;" onclick="toggleHistory(' + JSON.stringify(id) + ')">History</button>' +
+      '<button class="hist-btn" style="margin-left:6px;background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;" onclick="openUsePassModal(' + JSON.stringify(id) + ',' + JSON.stringify(m.name) + ')">Use Pass</button>' +
     '</div>' +
     '<div id="hist_' + id + '" style="display:none;background:#f8fafc;border-radius:8px;padding:10px 14px;margin-bottom:6px;"></div>';
   });
@@ -420,6 +464,66 @@ function toggleHistory(memberId) {
     el.innerHTML = html;
   };
   jsonpOnce(API_URL + '?action=passhistory&id=' + encodeURIComponent(memberId) + '&callback=' + cb);
+}
+
+// ── Use Pass modal ───────────────────────────────────────────
+var modalMemberId   = '';
+var modalMemberName = '';
+
+function openUsePassModal(memberId, memberName) {
+  modalMemberId   = memberId;
+  modalMemberName = memberName;
+  document.getElementById('modalMemberName').textContent = memberName;
+  document.getElementById('modalMemberId').textContent   = memberId;
+  document.getElementById('modalPassType').value         = 'single';
+  document.getElementById('modalGuestCount').value       = '1';
+  document.getElementById('modalGuestNames').value       = '';
+  document.getElementById('modalArea').value             = '';
+  document.getElementById('modalError').textContent      = '';
+  document.getElementById('usePassModal').style.display  = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('usePassModal').style.display = 'none';
+}
+
+function confirmUsePass() {
+  var passType   = document.getElementById('modalPassType').value;
+  var guestCount = parseInt(document.getElementById('modalGuestCount').value) || 1;
+  var area       = document.getElementById('modalArea').value.trim() || 'Not specified';
+
+  if (passType === 'family' && guestCount > 6) {
+    document.getElementById('modalError').textContent = 'Family pass covers up to 6 guests.';
+    return;
+  }
+
+  var cb = 'usePassResult_' + Date.now();
+  window[cb] = function(r) {
+    if (!r.success) {
+      document.getElementById('modalError').textContent = r.message || 'Error using pass.';
+      return;
+    }
+    // Log check-in
+    var checkinCb = 'checkinResult_' + Date.now();
+    window[checkinCb] = function(ok) {
+      closeModal();
+      var countEl = document.getElementById((passType === 'family' ? 'family' : 'single') + '_' + modalMemberId);
+      if (countEl) countEl.textContent = passType === 'family' ? r.familyPasses : r.singlePasses;
+      var m = allPassData.find(function(x) { return String(x.id) === String(modalMemberId); });
+      if (m) { m.single = r.singlePasses; m.family = r.familyPasses; }
+      document.getElementById('passMsg').textContent = 'Pass used and check-in logged for ' + modalMemberName;
+      setTimeout(function() { document.getElementById('passMsg').textContent = ''; }, 4000);
+      if (checkinsOpen) loadCheckins();
+    };
+    var guestNames = document.getElementById('modalGuestNames').value.trim();
+    jsonpOnce(API_URL + '?action=staffcheckin&id=' + encodeURIComponent(modalMemberId) +
+      '&guests=' + guestCount + '&area=' + encodeURIComponent(area) +
+      '&passtype=' + encodeURIComponent(passType) +
+      '&guestnames=' + encodeURIComponent(guestNames) +
+      '&callback=' + checkinCb);
+  };
+  jsonpOnce(API_URL + '?action=usepass&id=' + encodeURIComponent(modalMemberId) +
+    '&passtype=' + passType + '&guests=' + guestCount + '&callback=' + cb);
 }
 
 // ── JSONP helpers ─────────────────────────────────────────────
