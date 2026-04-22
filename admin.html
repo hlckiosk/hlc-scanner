@@ -376,6 +376,36 @@ function renderPasses(list) {
   document.getElementById('passListWrap').innerHTML = html;
 }
 
+function toggleHistory(memberId) {
+  var el = document.getElementById('hist_' + memberId);
+  if (!el) return;
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = 'Loading...';
+  var cb = 'gotHist_' + memberId.replace(/[^a-zA-Z0-9]/g,'_');
+  window[cb] = function(data) {
+    var rows = data.rows || [];
+    if (!rows.length) { el.innerHTML = '<span style="color:#94a3b8;">No pass history yet.</span>'; return; }
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+      '<tr style="background:#e2e8f0;"><th style="padding:4px 8px;text-align:left;">Date</th><th style="padding:4px 8px;text-align:left;">Time</th><th style="padding:4px 8px;text-align:left;">Type</th><th style="padding:4px 8px;text-align:left;">Action</th><th style="padding:4px 8px;text-align:center;">Change</th><th style="padding:4px 8px;text-align:center;">Balance</th></tr>';
+    rows.forEach(function(r, i) {
+      var bg   = i % 2 === 0 ? '#fff' : '#f8fafc';
+      var clr  = r.change && r.change.indexOf('-') > -1 ? '#c62828' : '#2e7d32';
+      html += '<tr style="background:' + bg + ';">' +
+        '<td style="padding:5px 8px;font-weight:600;">' + r.date + '</td>' +
+        '<td style="padding:5px 8px;color:#64748b;">' + r.time + '</td>' +
+        '<td style="padding:5px 8px;">' + r.passType + '</td>' +
+        '<td style="padding:5px 8px;text-transform:capitalize;">' + r.action + '</td>' +
+        '<td style="padding:5px 8px;text-align:center;font-weight:700;color:' + clr + ';">' + r.change + '</td>' +
+        '<td style="padding:5px 8px;text-align:center;font-weight:700;color:#1565C0;">' + r.newBalance + '</td>' +
+        '</tr>';
+    });
+    html += '</table>';
+    el.innerHTML = html;
+  };
+  jsonp(API_URL + '?action=passhistory&id=' + encodeURIComponent(memberId) + '&callback=' + cb);
+}
+
 function adjustPass(memberId, type, delta) {
   var countEl = document.getElementById(type + '_' + memberId);
   if (!countEl) return;
