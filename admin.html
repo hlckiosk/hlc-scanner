@@ -34,6 +34,16 @@ tr:nth-child(even) td { background: #f8fafc; }
 .green { background: #e8f5e9; color: #2e7d32; }
 .gray { background: #f0f4f8; color: #64748b; }
 #msg { font-size: 13px; color: #64748b; margin-top: 12px; }
+.pass-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #e2e8f0; flex-wrap:wrap; }
+.pass-row:last-child { border-bottom:none; }
+.pass-name { font-weight:600; font-size:14px; flex:1; min-width:120px; }
+.pass-bal { display:flex; align-items:center; gap:6px; }
+.pass-type-label { font-size:12px; color:#64748b; font-weight:600; min-width:80px; }
+.pass-count { font-size:18px; font-weight:700; color:#1565C0; min-width:28px; text-align:center; }
+.pass-btn { background:#f0f4f8; border:1px solid #cbd5e1; border-radius:6px; padding:4px 10px; font-size:16px; font-weight:700; cursor:pointer; color:#0d2b5e; }
+.pass-btn:hover { background:#e2e8f0; }
+.pass-search { width:100%; padding:10px 14px; font-size:14px; border:2px solid #e2e8f0; border-radius:8px; margin-bottom:12px; outline:none; }
+.pass-search:focus { border-color:#1565C0; }
 
 /* Collapsible check-in section */
 .collapsible-header {
@@ -130,6 +140,20 @@ tr:nth-child(even) td { background: #f8fafc; }
     <div id="memberListStatus" style="font-size:14px;color:#64748b;margin-top:8px;"></div>
     <div id="memberList" style="margin-top:8px;"></div>
     <div id="msg"></div>
+
+    <!-- PASS MANAGEMENT -->
+    <div class="collapsible-header" id="passToggle" onclick="togglePasses()">
+      <h3>Guest Pass Management</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="collapsible-body" id="passBody">
+      <p style="font-size:13px;color:#64748b;margin-bottom:12px;">Add or remove prepaid guest passes for members. Single pass = 1 guest. Family pass = up to 6 guests.</p>
+      <input type="text" class="pass-search" id="passSearch" placeholder="Search by name or member ID..." oninput="filterPasses()" />
+      <div id="passListWrap">
+        <button class="blue" style="padding:8px 16px;font-size:13px;" onclick="loadPasses()">Load Pass Balances</button>
+      </div>
+      <div id="passMsg" style="font-size:13px;color:#64748b;margin-top:8px;"></div>
+    </div>
   </div>
 </div>
 
@@ -278,6 +302,105 @@ function gotMembers(members) {
   html += '</tbody></table>';
   html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click QR to open full size. Right-click → Save Image to download PNG.</p>';
   document.getElementById('memberList').innerHTML = html;
+}
+
+var passesOpen  = false;
+var allPassData = [];
+
+function togglePasses() {
+  passesOpen = !passesOpen;
+  document.getElementById('passToggle').classList.toggle('open', passesOpen);
+  document.getElementById('passBody').classList.toggle('open', passesOpen);
+  if (passesOpen && !allPassData.length) loadPasses();
+}
+
+function loadPasses() {
+  document.getElementById('passListWrap').innerHTML = '<p style="color:#64748b;font-size:13px;">Loading...</p>';
+  jsonp(API_URL + '?action=members&callback=gotPassMembers');
+}
+
+function gotPassMembers(members) {
+  if (!members || !members.length) {
+    document.getElementById('passListWrap').innerHTML = '<p style="color:#c62828;">No members found.</p>';
+    return;
+  }
+  // Fetch pass balances for all members
+  allPassData = members.map(function(m) {
+    return { id: m.id, name: m.name, single: 0, family: 0 };
+  });
+  jsonp(API_URL + '?action=allpasses&callback=gotAllPasses');
+}
+
+function gotAllPasses(data) {
+  if (data && data.passes) {
+    data.passes.forEach(function(p) {
+      var m = allPassData.find(function(x) { return x.id === p.id; });
+      if (m) { m.single = p.single || 0; m.family = p.family || 0; }
+    });
+  }
+  renderPasses(allPassData);
+}
+
+function filterPasses() {
+  var q = document.getElementById('passSearch').value.toLowerCase();
+  var filtered = allPassData.filter(function(m) {
+    return m.name.toLowerCase().indexOf(q) > -1 || m.id.toLowerCase().indexOf(q) > -1;
+  });
+  renderPasses(filtered);
+}
+
+function renderPasses(list) {
+  if (!list.length) {
+    document.getElementById('passListWrap').innerHTML = '<p style="color:#94a3b8;font-size:13px;">No members found.</p>';
+    return;
+  }
+  var html = '<div style="max-height:400px;overflow-y:auto;">';
+  list.forEach(function(m) {
+    html += '<div class="pass-row">' +
+      '<div class="pass-name">' + m.name + ' <span style="color:#94a3b8;font-weight:400;font-size:12px;">ID: ' + m.id + '</span></div>' +
+      '<div class="pass-bal">' +
+        '<span class="pass-type-label">Single:</span>' +
+        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','single',-1)">−</button>' +
+        '<span class="pass-count" id="single_' + m.id + '">' + m.single + '</span>' +
+        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','single',1)">+</button>' +
+      '</div>' +
+      '<div class="pass-bal" style="margin-left:12px;">' +
+        '<span class="pass-type-label">Family:</span>' +
+        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','family',-1)">−</button>' +
+        '<span class="pass-count" id="family_' + m.id + '">' + m.family + '</span>' +
+        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','family',1)">+</button>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  document.getElementById('passListWrap').innerHTML = html;
+}
+
+function adjustPass(memberId, type, delta) {
+  var countEl = document.getElementById(type + '_' + memberId);
+  if (!countEl) return;
+  var singleDelta = type === 'single' ? delta : 0;
+  var familyDelta = type === 'family' ? delta : 0;
+  jsonpPost(API_URL + '?action=updatepass&id=' + encodeURIComponent(memberId) +
+    '&single=' + singleDelta + '&family=' + familyDelta + '&callback=passUpdated_' + memberId + '_' + type);
+  window['passUpdated_' + memberId + '_' + type] = function(r) {
+    if (r.success) {
+      if (type === 'single') countEl.textContent = r.singlePasses;
+      if (type === 'family') countEl.textContent = r.familyPasses;
+      var m = allPassData.find(function(x) { return x.id === memberId; });
+      if (m) { m.single = r.singlePasses; m.family = r.familyPasses; }
+      document.getElementById('passMsg').textContent = 'Updated ' + memberId;
+      setTimeout(function() { document.getElementById('passMsg').textContent = ''; }, 2000);
+    } else {
+      document.getElementById('passMsg').textContent = 'Error: ' + (r.message || 'unknown');
+    }
+  };
+}
+
+function jsonpPost(url) {
+  var s = document.createElement('script');
+  s.src = url;
+  document.body.appendChild(s);
 }
 
 var _jTimer = null;
