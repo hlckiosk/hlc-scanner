@@ -14,13 +14,12 @@ h3 { font-size: 16px; font-weight: 600; color: #334155; margin: 24px 0 10px; }
 p { font-size: 14px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
 button { display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
 .blue { background: #1565C0; color: white; }
-.red { background: #c62828; color: white; }
+.red  { background: #c62828; color: white; }
 input[type="password"] { width: 100%; max-width: 320px; padding: 14px 18px; font-size: 16px; border: 2px solid #cbd5e1; border-radius: 10px; margin: 8px 0 4px; display: block; outline: none; }
 input[type="password"]:focus { border-color: #1565C0; }
 .err { color: #c62828; font-size: 14px; margin-top: 6px; min-height: 20px; }
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
-.stat-card { background: #f0f4f8; border-radius: 12px; padding: 18px; text-align: center; cursor: pointer; transition: box-shadow 0.15s; }
-.stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.stat-card { background: #f0f4f8; border-radius: 12px; padding: 18px; text-align: center; }
 .stat-num { font-size: 36px; font-weight: 700; color: #1565C0; }
 .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
 table { width: 100%; border-collapse: collapse; margin-top: 8px; }
@@ -32,34 +31,28 @@ tr:nth-child(even) td { background: #f8fafc; }
 .overflow { overflow-x: auto; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .green { background: #e8f5e9; color: #2e7d32; }
-.gray { background: #f0f4f8; color: #64748b; }
+.gray  { background: #f0f4f8; color: #64748b; }
 #msg { font-size: 13px; color: #64748b; margin-top: 12px; }
+.collapsible-header { display:flex; align-items:center; justify-content:space-between; background:#f0f4f8; border-radius:10px; padding:14px 18px; cursor:pointer; margin:24px 0 0; user-select:none; border:2px solid transparent; transition:border-color 0.15s; }
+.collapsible-header:hover { border-color:#1565C0; }
+.collapsible-header h3 { margin:0; color:#0d2b5e; font-size:16px; }
+.collapsible-header .chevron { font-size:18px; color:#1565C0; transition:transform 0.2s; }
+.collapsible-header.open .chevron { transform:rotate(180deg); }
+.collapsible-body { display:none; margin-top:12px; }
+.collapsible-body.open { display:block; }
+.checkin-count { background:#1565C0; color:white; font-size:12px; font-weight:700; padding:2px 10px; border-radius:99px; margin-left:10px; }
 .pass-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #e2e8f0; flex-wrap:wrap; }
 .pass-row:last-child { border-bottom:none; }
 .pass-name { font-weight:600; font-size:14px; flex:1; min-width:120px; }
 .pass-bal { display:flex; align-items:center; gap:6px; }
-.pass-type-label { font-size:12px; color:#64748b; font-weight:600; min-width:80px; }
+.pass-type-label { font-size:12px; color:#64748b; font-weight:600; min-width:60px; }
 .pass-count { font-size:18px; font-weight:700; color:#1565C0; min-width:28px; text-align:center; }
-.pass-btn { background:#f0f4f8; border:1px solid #cbd5e1; border-radius:6px; padding:4px 10px; font-size:16px; font-weight:700; cursor:pointer; color:#0d2b5e; }
+.pass-btn { background:#f0f4f8; border:1px solid #cbd5e1; border-radius:6px; padding:4px 10px; font-size:16px; font-weight:700; cursor:pointer; color:#0d2b5e; margin:0; }
 .pass-btn:hover { background:#e2e8f0; }
 .pass-search { width:100%; padding:10px 14px; font-size:14px; border:2px solid #e2e8f0; border-radius:8px; margin-bottom:12px; outline:none; }
 .pass-search:focus { border-color:#1565C0; }
-
-/* Collapsible check-in section */
-.collapsible-header {
-  display: flex; align-items: center; justify-content: space-between;
-  background: #f0f4f8; border-radius: 10px; padding: 14px 18px;
-  cursor: pointer; margin: 24px 0 0; user-select: none;
-  border: 2px solid transparent; transition: border-color 0.15s;
-}
-.collapsible-header:hover { border-color: #1565C0; }
-.collapsible-header h3 { margin: 0; color: #0d2b5e; font-size: 16px; }
-.collapsible-header .chevron { font-size: 18px; color: #1565C0; transition: transform 0.2s; }
-.collapsible-header.open .chevron { transform: rotate(180deg); }
-.collapsible-body { display: none; margin-top: 12px; }
-.collapsible-body.open { display: block; }
-.checkin-count { background: #1565C0; color: white; font-size: 12px; font-weight: 700;
-  padding: 2px 10px; border-radius: 99px; margin-left: 10px; }
+.hist-btn { background:#e8f0fe; border:1px solid #90caf9; border-radius:6px; padding:4px 12px; font-size:12px; font-weight:600; cursor:pointer; color:#1565C0; margin:0; }
+.hist-btn:hover { background:#dde8fd; }
 </style>
 </head>
 <body>
@@ -68,7 +61,7 @@ tr:nth-child(even) td { background: #f8fafc; }
   <div class="card">
     <h1>HLC Admin Dashboard</h1>
     <p>Enter your password to continue.</p>
-    <input type="password" id="pw" placeholder="Password">
+    <input type="password" id="pw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
     <div class="err" id="pwErr"></div>
     <br>
     <button class="blue" onclick="doLogin()">Sign In</button>
@@ -77,14 +70,14 @@ tr:nth-child(even) td { background: #f8fafc; }
 
 <div id="adminScreen" style="display:none;">
   <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
       <div>
         <h1>HLC Admin Dashboard</h1>
-        <div id="dateStr" style="font-size:14px; color:#64748b; margin-top:4px;"></div>
+        <div id="dateStr" style="font-size:14px;color:#64748b;margin-top:4px;"></div>
       </div>
       <div>
         <button class="blue" onclick="loadStats()">Refresh</button>
-        <button class="red" onclick="doLogout()">Sign Out</button>
+        <button class="red"  onclick="doLogout()">Sign Out</button>
       </div>
     </div>
 
@@ -96,14 +89,14 @@ tr:nth-child(even) td { background: #f8fafc; }
       <div class="stat-card"><div class="stat-num" id="sGst">--</div><div class="stat-label">Guests</div></div>
     </div>
 
-    <!-- Today's Check-ins collapsible -->
+    <!-- Today's Check-ins -->
     <div class="collapsible-header" id="checkinToggle" onclick="toggleCheckins()">
       <h3>Today's Check-ins <span class="checkin-count" id="checkinCount">--</span></h3>
       <span class="chevron">▼</span>
     </div>
     <div class="collapsible-body" id="checkinBody">
-      <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="blue" style="padding:8px 16px;font-size:13px;" onclick="loadCheckins()">Refresh check-ins</button>
+      <div style="margin-bottom:10px;">
+        <button class="blue" style="padding:8px 16px;font-size:13px;" onclick="loadCheckins()">Refresh</button>
       </div>
       <div class="overflow">
         <table>
@@ -112,7 +105,7 @@ tr:nth-child(even) td { background: #f8fafc; }
             <th>Family</th><th>Area</th><th>Guests</th><th>Guest Names</th><th>Payment</th>
           </tr></thead>
           <tbody id="checkinTableBody">
-            <tr><td colspan="9" style="color:#94a3b8;text-align:center;">Click to load check-ins</td></tr>
+            <tr><td colspan="9" style="color:#94a3b8;text-align:center;">Click to load</td></tr>
           </tbody>
         </table>
       </div>
@@ -135,25 +128,26 @@ tr:nth-child(even) td { background: #f8fafc; }
     </div>
 
     <h3 style="margin-top:28px;">Member QR Codes</h3>
-    <p>Click any QR code to open full size. Right-click and Save Image to download as PNG for members.</p>
+    <p>Click any QR code to open full size. Right-click and Save Image to download as PNG.</p>
     <button class="blue" onclick="loadMembers()">Load Member List</button>
     <div id="memberListStatus" style="font-size:14px;color:#64748b;margin-top:8px;"></div>
     <div id="memberList" style="margin-top:8px;"></div>
-    <div id="msg"></div>
 
-    <!-- PASS MANAGEMENT -->
+    <!-- Guest Pass Management -->
     <div class="collapsible-header" id="passToggle" onclick="togglePasses()">
       <h3>Guest Pass Management</h3>
       <span class="chevron">▼</span>
     </div>
     <div class="collapsible-body" id="passBody">
-      <p style="font-size:13px;color:#64748b;margin-bottom:12px;">Add or remove prepaid guest passes for members. Single pass = 1 guest. Family pass = up to 6 guests.</p>
+      <p style="font-size:13px;color:#64748b;margin-bottom:12px;">Add or remove prepaid guest passes. Single pass = 1 guest. Family pass = up to 6 guests.</p>
       <input type="text" class="pass-search" id="passSearch" placeholder="Search by name or member ID..." oninput="filterPasses()" />
       <div id="passListWrap">
         <button class="blue" style="padding:8px 16px;font-size:13px;" onclick="loadPasses()">Load Pass Balances</button>
       </div>
       <div id="passMsg" style="font-size:13px;color:#64748b;margin-top:8px;"></div>
     </div>
+
+    <div id="msg"></div>
   </div>
 </div>
 
@@ -161,6 +155,8 @@ tr:nth-child(even) td { background: #f8fafc; }
 var PASS    = 'hlc2026';
 var API_URL = 'https://script.google.com/macros/s/AKfycbyhfL9HqO08sd5lwMWImuENbBENLmAHcULYurQgCtK_cjcv0grTwUK7tkUVsB_LzdaF/exec';
 var checkinsOpen = false;
+var passesOpen   = false;
+var allPassData  = [];
 
 function doLogin() {
   var pw = document.getElementById('pw').value.trim();
@@ -181,10 +177,6 @@ function doLogout() {
   document.getElementById('pw').value = '';
 }
 
-document.getElementById('pw').onkeydown = function(e) {
-  if (e.key === 'Enter') doLogin();
-};
-
 function loadStats() {
   document.getElementById('dateStr').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   document.getElementById('msg').textContent = 'Loading...';
@@ -192,10 +184,10 @@ function loadStats() {
 }
 
 function gotStats(data) {
-  document.getElementById('sTot').textContent = data.totalPeople || 0;
+  document.getElementById('sTot').textContent = data.totalPeople   || 0;
   document.getElementById('sCi').textContent  = data.totalCheckins || 0;
-  document.getElementById('sMem').textContent = data.memberPeople || 0;
-  document.getElementById('sGst').textContent = data.guestPeople || 0;
+  document.getElementById('sMem').textContent = data.memberPeople  || 0;
+  document.getElementById('sGst').textContent = data.guestPeople   || 0;
   document.getElementById('checkinCount').textContent = data.totalCheckins || 0;
   document.getElementById('msg').textContent = 'Updated: ' + new Date().toLocaleTimeString();
 
@@ -212,7 +204,7 @@ function gotStats(data) {
   var hist = (data.history || []).slice().reverse();
   document.getElementById('histBody').innerHTML = hist.length ? hist.map(function(h) {
     return '<tr>' +
-      '<td style="font-weight:600;white-space:nowrap;">' + h.date + '</td>' +
+      '<td style="font-weight:600;white-space:nowrap;">' + h.date     + '</td>' +
       '<td style="text-align:center;">' + (h.members||0)  + '</td>' +
       '<td style="text-align:center;">' + (h.guests||0)   + '</td>' +
       '<td style="text-align:center;font-weight:700;color:#1565C0;">' + (h.payments||0) + '</td>' +
@@ -228,6 +220,7 @@ function gotStats(data) {
   }).join('') : '<tr><td colspan="12" style="color:#94a3b8;text-align:center;">No history yet.</td></tr>';
 }
 
+// ── Today's check-ins ────────────────────────────────────────
 function toggleCheckins() {
   checkinsOpen = !checkinsOpen;
   document.getElementById('checkinToggle').classList.toggle('open', checkinsOpen);
@@ -248,30 +241,27 @@ function gotCheckins(data) {
       '<tr><td colspan="9" style="color:#94a3b8;text-align:center;">No check-ins today yet.</td></tr>';
     return;
   }
-
   document.getElementById('checkinTableBody').innerHTML = rows.map(function(r, i) {
-    var bg = i % 2 === 0 ? '#fff' : '#f8fafc';
+    var bg   = i % 2 === 0 ? '#fff' : '#f8fafc';
     var time = '';
     try { time = new Date(r[0]).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}); } catch(e) { time = r[0]; }
-    var payBadge = r[8] === 'Yes'
-      ? '<span class="badge" style="background:#fef3c7;color:#92400e;">Payment</span>'
-      : '';
+    var payBadge = r[8] === 'Yes' ? '<span class="badge" style="background:#fef3c7;color:#92400e;">Payment</span>' : '';
     return '<tr style="background:' + bg + ';">' +
-      '<td style="white-space:nowrap;">' + time + '</td>' +
-      '<td style="font-weight:600;">'    + (r[1] || '—') + '</td>' +
-      '<td>'                             + (r[2] || '—') + '</td>' +
+      '<td style="white-space:nowrap;">' + time           + '</td>' +
+      '<td style="font-weight:600;">'    + (r[1]||'—')    + '</td>' +
+      '<td>'                             + (r[2]||'—')    + '</td>' +
       '<td><span class="badge ' + (r[3]==='Active'?'green':'gray') + '">' + (r[3]||'—') + '</span></td>' +
-      '<td style="text-align:center;">'  + (r[4] || '—') + '</td>' +
-      '<td>'                             + (r[5] || '—') + '</td>' +
-      '<td style="text-align:center;">'  + (r[6] || '0') + '</td>' +
-      '<td>'                             + (r[7] || '—') + '</td>' +
-      '<td>'                             + payBadge      + '</td>' +
+      '<td style="text-align:center;">'  + (r[4]||'—')   + '</td>' +
+      '<td>'                             + (r[5]||'—')    + '</td>' +
+      '<td style="text-align:center;">'  + (r[6]||'0')   + '</td>' +
+      '<td>'                             + (r[7]||'—')    + '</td>' +
+      '<td>'                             + payBadge        + '</td>' +
       '</tr>';
   }).join('');
-
   document.getElementById('checkinCount').textContent = rows.length;
 }
 
+// ── Member QR codes ──────────────────────────────────────────
 function loadMembers() {
   document.getElementById('memberList').innerHTML = '';
   document.getElementById('memberListStatus').textContent = 'Loading members...';
@@ -287,26 +277,23 @@ function gotMembers(members) {
   var html = '<table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th style="text-align:center;">QR Code</th></tr></thead><tbody>';
   members.forEach(function(m, i) {
     var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(m.id);
-    var bg = i % 2 === 0 ? '#fff' : '#f8fafc';
+    var bg    = i % 2 === 0 ? '#fff' : '#f8fafc';
     html += '<tr style="background:' + bg + ';">' +
       '<td style="font-weight:600;">' + m.id + '</td>' +
       '<td>' + m.name + '</td>' +
       '<td><span class="badge ' + (m.status==='Active'?'green':'gray') + '">' + m.status + '</span></td>' +
       '<td style="text-align:center;padding:8px;">' +
-      '<img src="' + qrUrl + '" width="80" height="80" ' +
-      'style="border:2px solid #1565C0;border-radius:6px;cursor:pointer;display:block;margin:0 auto;" ' +
-      'title="Click to open full size" ' +
-      'onclick="window.open(\'' + qrUrl + '\',\'_blank\')">' +
+        '<img src="' + qrUrl + '" width="80" height="80" ' +
+        'style="border:2px solid #1565C0;border-radius:6px;cursor:pointer;display:block;margin:0 auto;" ' +
+        'onclick="window.open(\'' + qrUrl + '\',\'_blank\')">' +
       '</td></tr>';
   });
   html += '</tbody></table>';
-  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click QR to open full size. Right-click → Save Image to download PNG.</p>';
+  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click QR to open full size. Right-click to save PNG.</p>';
   document.getElementById('memberList').innerHTML = html;
 }
 
-var passesOpen  = false;
-var allPassData = [];
-
+// ── Guest pass management ─────────────────────────────────────
 function togglePasses() {
   passesOpen = !passesOpen;
   document.getElementById('passToggle').classList.toggle('open', passesOpen);
@@ -324,7 +311,6 @@ function gotPassMembers(members) {
     document.getElementById('passListWrap').innerHTML = '<p style="color:#c62828;">No members found.</p>';
     return;
   }
-  // Fetch pass balances for all members
   allPassData = members.map(function(m) {
     return { id: m.id, name: m.name, single: 0, family: 0 };
   });
@@ -344,7 +330,7 @@ function gotAllPasses(data) {
 function filterPasses() {
   var q = document.getElementById('passSearch').value.toLowerCase();
   var filtered = allPassData.filter(function(m) {
-    return m.name.toLowerCase().indexOf(q) > -1 || m.id.toLowerCase().indexOf(q) > -1;
+    return m.name.toLowerCase().indexOf(q) > -1 || String(m.id).toLowerCase().indexOf(q) > -1;
   });
   renderPasses(filtered);
 }
@@ -354,26 +340,49 @@ function renderPasses(list) {
     document.getElementById('passListWrap').innerHTML = '<p style="color:#94a3b8;font-size:13px;">No members found.</p>';
     return;
   }
-  var html = '<div style="max-height:400px;overflow-y:auto;">';
+  var html = '<div style="max-height:500px;overflow-y:auto;">';
   list.forEach(function(m) {
+    var id = String(m.id);
     html += '<div class="pass-row">' +
-      '<div class="pass-name">' + m.name + ' <span style="color:#94a3b8;font-weight:400;font-size:12px;">ID: ' + m.id + '</span></div>' +
+      '<div class="pass-name">' + m.name + ' <span style="color:#94a3b8;font-weight:400;font-size:12px;">ID: ' + id + '</span></div>' +
       '<div class="pass-bal">' +
         '<span class="pass-type-label">Single:</span>' +
-        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','single',-1)">−</button>' +
-        '<span class="pass-count" id="single_' + m.id + '">' + m.single + '</span>' +
-        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','single',1)">+</button>' +
+        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'single\',-1)">−</button>' +
+        '<span class="pass-count" id="single_' + id + '">' + m.single + '</span>' +
+        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'single\',1)">+</button>' +
       '</div>' +
-      '<div class="pass-bal" style="margin-left:12px;">' +
+      '<div class="pass-bal" style="margin-left:10px;">' +
         '<span class="pass-type-label">Family:</span>' +
-        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','family',-1)">−</button>' +
-        '<span class="pass-count" id="family_' + m.id + '">' + m.family + '</span>' +
-        '<button class="pass-btn" onclick="adjustPass('' + m.id + '','family',1)">+</button>' +
+        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'family\',-1)">−</button>' +
+        '<span class="pass-count" id="family_' + id + '">' + m.family + '</span>' +
+        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'family\',1)">+</button>' +
       '</div>' +
-    '</div>';
+      '<button class="hist-btn" style="margin-left:10px;" onclick="toggleHistory(' + JSON.stringify(id) + ')">History</button>' +
+    '</div>' +
+    '<div id="hist_' + id + '" style="display:none;background:#f8fafc;border-radius:8px;padding:10px 14px;margin-bottom:6px;"></div>';
   });
   html += '</div>';
   document.getElementById('passListWrap').innerHTML = html;
+}
+
+function adjustPass(memberId, type, delta) {
+  var singleDelta = type === 'single' ? delta : 0;
+  var familyDelta = type === 'family' ? delta : 0;
+  var cb = 'passUpdated_' + String(memberId).replace(/[^a-zA-Z0-9]/g,'_') + '_' + type + '_' + Date.now();
+  window[cb] = function(r) {
+    if (r.success) {
+      var countEl = document.getElementById(type + '_' + memberId);
+      if (countEl) countEl.textContent = type === 'single' ? r.singlePasses : r.familyPasses;
+      var m = allPassData.find(function(x) { return String(x.id) === String(memberId); });
+      if (m) { m.single = r.singlePasses; m.family = r.familyPasses; }
+      document.getElementById('passMsg').textContent = 'Updated ' + memberId;
+      setTimeout(function() { document.getElementById('passMsg').textContent = ''; }, 2000);
+    } else {
+      document.getElementById('passMsg').textContent = 'Error: ' + (r.message || 'unknown');
+    }
+  };
+  jsonpOnce(API_URL + '?action=updatepass&id=' + encodeURIComponent(memberId) +
+    '&single=' + singleDelta + '&family=' + familyDelta + '&callback=' + cb);
 }
 
 function toggleHistory(memberId) {
@@ -382,57 +391,38 @@ function toggleHistory(memberId) {
   if (el.style.display === 'block') { el.style.display = 'none'; return; }
   el.style.display = 'block';
   el.innerHTML = 'Loading...';
-  var cb = 'gotHist_' + memberId.replace(/[^a-zA-Z0-9]/g,'_');
+  var cb = 'gotHist_' + String(memberId).replace(/[^a-zA-Z0-9]/g,'_') + '_' + Date.now();
   window[cb] = function(data) {
     var rows = data.rows || [];
     if (!rows.length) { el.innerHTML = '<span style="color:#94a3b8;">No pass history yet.</span>'; return; }
     var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
-      '<tr style="background:#e2e8f0;"><th style="padding:4px 8px;text-align:left;">Date</th><th style="padding:4px 8px;text-align:left;">Time</th><th style="padding:4px 8px;text-align:left;">Type</th><th style="padding:4px 8px;text-align:left;">Action</th><th style="padding:4px 8px;text-align:center;">Change</th><th style="padding:4px 8px;text-align:center;">Balance</th></tr>';
+      '<tr style="background:#e2e8f0;">' +
+        '<th style="padding:4px 8px;text-align:left;">Date</th>' +
+        '<th style="padding:4px 8px;text-align:left;">Time</th>' +
+        '<th style="padding:4px 8px;text-align:left;">Type</th>' +
+        '<th style="padding:4px 8px;text-align:left;">Action</th>' +
+        '<th style="padding:4px 8px;text-align:center;">Change</th>' +
+        '<th style="padding:4px 8px;text-align:center;">Balance</th>' +
+      '</tr>';
     rows.forEach(function(r, i) {
-      var bg   = i % 2 === 0 ? '#fff' : '#f8fafc';
-      var clr  = r.change && r.change.indexOf('-') > -1 ? '#c62828' : '#2e7d32';
+      var bg  = i % 2 === 0 ? '#fff' : '#f8fafc';
+      var clr = r.change && r.change.indexOf('-') > -1 ? '#c62828' : '#2e7d32';
       html += '<tr style="background:' + bg + ';">' +
-        '<td style="padding:5px 8px;font-weight:600;">' + r.date + '</td>' +
-        '<td style="padding:5px 8px;color:#64748b;">' + r.time + '</td>' +
-        '<td style="padding:5px 8px;">' + r.passType + '</td>' +
+        '<td style="padding:5px 8px;font-weight:600;">' + r.date     + '</td>' +
+        '<td style="padding:5px 8px;color:#64748b;">'   + r.time     + '</td>' +
+        '<td style="padding:5px 8px;">'                 + r.passType + '</td>' +
         '<td style="padding:5px 8px;text-transform:capitalize;">' + r.action + '</td>' +
-        '<td style="padding:5px 8px;text-align:center;font-weight:700;color:' + clr + ';">' + r.change + '</td>' +
-        '<td style="padding:5px 8px;text-align:center;font-weight:700;color:#1565C0;">' + r.newBalance + '</td>' +
+        '<td style="padding:5px 8px;text-align:center;font-weight:700;color:' + clr + ';">' + r.change     + '</td>' +
+        '<td style="padding:5px 8px;text-align:center;font-weight:700;color:#1565C0;">'     + r.newBalance + '</td>' +
         '</tr>';
     });
     html += '</table>';
     el.innerHTML = html;
   };
-  jsonp(API_URL + '?action=passhistory&id=' + encodeURIComponent(memberId) + '&callback=' + cb);
+  jsonpOnce(API_URL + '?action=passhistory&id=' + encodeURIComponent(memberId) + '&callback=' + cb);
 }
 
-function adjustPass(memberId, type, delta) {
-  var countEl = document.getElementById(type + '_' + memberId);
-  if (!countEl) return;
-  var singleDelta = type === 'single' ? delta : 0;
-  var familyDelta = type === 'family' ? delta : 0;
-  jsonpPost(API_URL + '?action=updatepass&id=' + encodeURIComponent(memberId) +
-    '&single=' + singleDelta + '&family=' + familyDelta + '&callback=passUpdated_' + memberId + '_' + type);
-  window['passUpdated_' + memberId + '_' + type] = function(r) {
-    if (r.success) {
-      if (type === 'single') countEl.textContent = r.singlePasses;
-      if (type === 'family') countEl.textContent = r.familyPasses;
-      var m = allPassData.find(function(x) { return x.id === memberId; });
-      if (m) { m.single = r.singlePasses; m.family = r.familyPasses; }
-      document.getElementById('passMsg').textContent = 'Updated ' + memberId;
-      setTimeout(function() { document.getElementById('passMsg').textContent = ''; }, 2000);
-    } else {
-      document.getElementById('passMsg').textContent = 'Error: ' + (r.message || 'unknown');
-    }
-  };
-}
-
-function jsonpPost(url) {
-  var s = document.createElement('script');
-  s.src = url;
-  document.body.appendChild(s);
-}
-
+// ── JSONP helpers ─────────────────────────────────────────────
 var _jTimer = null;
 function jsonp(url) {
   var old = document.getElementById('_jscript');
@@ -445,6 +435,13 @@ function jsonp(url) {
   _jTimer = setTimeout(function() {
     document.getElementById('msg').textContent = 'No response from server. Check deployment.';
   }, 12000);
+}
+
+function jsonpOnce(url) {
+  var s = document.createElement('script');
+  s.src = url;
+  s.onload = function() { s.parentNode && s.parentNode.removeChild(s); };
+  document.body.appendChild(s);
 }
 </script>
 </body>
