@@ -392,15 +392,11 @@ function renderPasses(list) {
         '<div class="pass-name">' + name + ' <span style="color:#94a3b8;font-weight:400;font-size:12px;">ID: ' + id + '</span></div>' +
         '<div class="pass-bal">' +
           '<span class="pass-type-label">Single:</span>' +
-          '<button class="pass-btn" data-id="' + id + '" data-type="single" data-delta="-1" onclick="handlePassBtn(this)">−</button>' +
           '<span class="pass-count" id="single_' + id + '">' + m.single + '</span>' +
-          '<button class="pass-btn" data-id="' + id + '" data-type="single" data-delta="1" onclick="handlePassBtn(this)">+</button>' +
         '</div>' +
         '<div class="pass-bal" style="margin-left:10px;">' +
           '<span class="pass-type-label">Family:</span>' +
-          '<button class="pass-btn" data-id="' + id + '" data-type="family" data-delta="-1" onclick="handlePassBtn(this)">−</button>' +
           '<span class="pass-count" id="family_' + id + '">' + m.family + '</span>' +
-          '<button class="pass-btn" data-id="' + id + '" data-type="family" data-delta="1" onclick="handlePassBtn(this)">+</button>' +
         '</div>' +
         '<button class="hist-btn" style="margin-left:10px;" data-id="' + id + '" onclick="toggleHistory(this.dataset.id)">History</button>' +
         '<button class="hist-btn" style="margin-left:6px;background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;" data-id="' + id + '" data-name="' + name.replace(/"/g,'&quot;') + '" onclick="openUsePassModal(this.dataset.id, this.dataset.name)">Use Pass</button>' +
