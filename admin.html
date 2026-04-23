@@ -172,8 +172,15 @@ tr:nth-child(even) td { background: #f8fafc; }
       <input type="text" id="modalGuestNames" placeholder="e.g. Jane Smith, John Doe" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;" />
     </div>
     <div style="margin-bottom:16px;">
-      <label style="font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Area(s)</label>
-      <input type="text" id="modalArea" placeholder="e.g. Pool, Tennis" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;" />
+      <label style="font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:6px;">Area(s)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:#f0f4f8;padding:7px 12px;border-radius:8px;cursor:pointer;"><input type="checkbox" value="Pool" class="modal-area-cb"> Pool</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:#f0f4f8;padding:7px 12px;border-radius:8px;cursor:pointer;"><input type="checkbox" value="Tennis" class="modal-area-cb"> Tennis</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:#f0f4f8;padding:7px 12px;border-radius:8px;cursor:pointer;"><input type="checkbox" value="Pickleball" class="modal-area-cb"> Pickleball</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:#f0f4f8;padding:7px 12px;border-radius:8px;cursor:pointer;"><input type="checkbox" value="Bowling" class="modal-area-cb"> Bowling</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:#f0f4f8;padding:7px 12px;border-radius:8px;cursor:pointer;"><input type="checkbox" value="Event" class="modal-area-cb"> Event</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:#f0f4f8;padding:7px 12px;border-radius:8px;cursor:pointer;"><input type="checkbox" value="Other" class="modal-area-cb"> Other</label>
+      </div>
     </div>
     <div id="modalError" style="color:#c62828;font-size:13px;margin-bottom:10px;"></div>
     <div style="display:flex;gap:10px;">
@@ -483,8 +490,8 @@ function openUsePassModal(memberId, memberName) {
   document.getElementById('modalMemberId').textContent   = memberId;
   document.getElementById('modalPassType').value         = 'single';
   document.getElementById('modalGuestCount').value       = '1';
-  document.getElementById('modalGuestNames').value       = '';
-  document.getElementById('modalArea').value             = '';
+  document.getElementById('modalGuestNames').value = '';
+  document.querySelectorAll('.modal-area-cb').forEach(function(cb) { cb.checked = false; });
   document.getElementById('modalError').textContent      = '';
   document.getElementById('usePassModal').style.display  = 'flex';
 }
@@ -496,7 +503,10 @@ function closeModal() {
 function confirmUsePass() {
   var passType   = document.getElementById('modalPassType').value;
   var guestCount = parseInt(document.getElementById('modalGuestCount').value) || 1;
-  var area       = document.getElementById('modalArea').value.trim() || 'Not specified';
+  var areaCbs    = document.querySelectorAll('.modal-area-cb:checked');
+  var areaParts  = [];
+  areaCbs.forEach(function(cb) { areaParts.push(cb.value); });
+  var area       = areaParts.length ? areaParts.join(', ') : 'Not specified';
 
   if (passType === 'family' && guestCount > 6) {
     document.getElementById('modalError').textContent = 'Family pass covers up to 6 guests.';
