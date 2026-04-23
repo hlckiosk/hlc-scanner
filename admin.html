@@ -385,29 +385,39 @@ function renderPasses(list) {
   }
   var html = '<div style="max-height:500px;overflow-y:auto;">';
   list.forEach(function(m) {
-    var id = String(m.id);
-    html += '<div class="pass-row">' +
-      '<div class="pass-name">' + m.name + ' <span style="color:#94a3b8;font-weight:400;font-size:12px;">ID: ' + id + '</span></div>' +
-      '<div class="pass-bal">' +
-        '<span class="pass-type-label">Single:</span>' +
-        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'single\',-1)">−</button>' +
-        '<span class="pass-count" id="single_' + id + '">' + m.single + '</span>' +
-        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'single\',1)">+</button>' +
+    var id   = String(m.id);
+    var name = m.name;
+    html +=
+      '<div class="pass-row" id="row_' + id + '">' +
+        '<div class="pass-name">' + name + ' <span style="color:#94a3b8;font-weight:400;font-size:12px;">ID: ' + id + '</span></div>' +
+        '<div class="pass-bal">' +
+          '<span class="pass-type-label">Single:</span>' +
+          '<button class="pass-btn" data-id="' + id + '" data-type="single" data-delta="-1" onclick="handlePassBtn(this)">−</button>' +
+          '<span class="pass-count" id="single_' + id + '">' + m.single + '</span>' +
+          '<button class="pass-btn" data-id="' + id + '" data-type="single" data-delta="1" onclick="handlePassBtn(this)">+</button>' +
+        '</div>' +
+        '<div class="pass-bal" style="margin-left:10px;">' +
+          '<span class="pass-type-label">Family:</span>' +
+          '<button class="pass-btn" data-id="' + id + '" data-type="family" data-delta="-1" onclick="handlePassBtn(this)">−</button>' +
+          '<span class="pass-count" id="family_' + id + '">' + m.family + '</span>' +
+          '<button class="pass-btn" data-id="' + id + '" data-type="family" data-delta="1" onclick="handlePassBtn(this)">+</button>' +
+        '</div>' +
+        '<button class="hist-btn" style="margin-left:10px;" data-id="' + id + '" onclick="toggleHistory(this.dataset.id)">History</button>' +
+        '<button class="hist-btn" style="margin-left:6px;background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;" data-id="' + id + '" data-name="' + name.replace(/"/g,'&quot;') + '" onclick="openUsePassModal(this.dataset.id, this.dataset.name)">Use Pass</button>' +
       '</div>' +
-      '<div class="pass-bal" style="margin-left:10px;">' +
-        '<span class="pass-type-label">Family:</span>' +
-        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'family\',-1)">−</button>' +
-        '<span class="pass-count" id="family_' + id + '">' + m.family + '</span>' +
-        '<button class="pass-btn" onclick="adjustPass(' + JSON.stringify(id) + ',\'family\',1)">+</button>' +
-      '</div>' +
-      '<button class="hist-btn" style="margin-left:10px;" onclick="toggleHistory(' + JSON.stringify(id) + ')">History</button>' +
-      '<button class="hist-btn" style="margin-left:6px;background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;" onclick="openUsePassModal(' + JSON.stringify(id) + ',' + JSON.stringify(m.name) + ')">Use Pass</button>' +
-    '</div>' +
-    '<div id="hist_' + id + '" style="display:none;background:#f8fafc;border-radius:8px;padding:10px 14px;margin-bottom:6px;"></div>';
+      '<div id="hist_' + id + '" style="display:none;background:#f8fafc;border-radius:8px;padding:10px 14px;margin-bottom:6px;"></div>';
   });
   html += '</div>';
   document.getElementById('passListWrap').innerHTML = html;
 }
+
+function handlePassBtn(btn) {
+  var id    = btn.dataset.id;
+  var type  = btn.dataset.type;
+  var delta = parseInt(btn.dataset.delta);
+  adjustPass(id, type, delta);
+}
+
 
 function adjustPass(memberId, type, delta) {
   var singleDelta = type === 'single' ? delta : 0;
