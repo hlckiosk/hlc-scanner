@@ -591,7 +591,7 @@ function renderLookupCard(data) {
         '<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:4px;">Member ID: ' + data.id + '</div>' +
         '<div style="font-size:18px;font-weight:700;color:#0d2b5e;margin-bottom:4px;">' + (data.m1name || '—') + '</div>' +
         (data.m2name ? '<div style="font-size:15px;color:#475569;margin-bottom:4px;">' + data.m2name + '</div>' : '') +
-        '<div style="font-size:13px;color:#2e7d32;font-weight:600;margin-bottom:8px;">' + (data.status || 'Active') + '</div>' +
+        '<div style="font-size:16px;font-weight:700;margin-bottom:8px;color:' + (data.status === 'Active' ? '#2e7d32' : '#c62828') + ';">' + (data.status || 'Active') + '</div>' +
         depsHtml +
         '<div style="margin-top:16px;">' +
           '<button class="blue" style="padding:10px 18px;font-size:13px;" onclick="sendQREmail(' + JSON.stringify(data.id) + ', ' + JSON.stringify(data.m1name || '') + ')">&#9993; Email QR Code</button>' +
@@ -608,13 +608,16 @@ function renderLookupCard(data) {
 function sendQREmail(memberId, memberName) {
   var msgEl = document.getElementById('qrEmailMsg_' + memberId);
   if (msgEl) msgEl.innerHTML = '<span style="color:#64748b;">Sending...</span>';
-  var cb = 'gotQREmail_' + Date.now();
-  window[cb] = function(r) {
+  var cbName = 'gotQREmail' + Date.now();
+  window[cbName] = function(r) {
     if (msgEl) msgEl.innerHTML = r.success
       ? '<span style="color:#2e7d32;font-weight:600;">&#10003; QR code emailed to ' + memberName + '</span>'
       : '<span style="color:#c62828;">Error: ' + (r.message || 'Could not send') + '</span>';
+    delete window[cbName];
   };
-  jsonpOnce(API_URL + '?action=sendqr&id=' + encodeURIComponent(memberId) + '&callback=' + cb);
+  var s = document.createElement('script');
+  s.src = API_URL + '?action=sendqr&id=' + encodeURIComponent(memberId) + '&callback=' + cbName;
+  document.body.appendChild(s);
 }
 
 // ── JSONP helpers ─────────────────────────────────────────────
