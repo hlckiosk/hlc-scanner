@@ -127,11 +127,22 @@ tr:nth-child(even) td { background: #f8fafc; }
       </table>
     </div>
 
-    <h3 style="margin-top:28px;">Member QR Codes</h3>
-    <p>Click any QR code to open full size. Right-click and Save Image to download as PNG.</p>
-    <button class="blue" onclick="loadMembers()">Load Member List</button>
-    <div id="memberListStatus" style="font-size:14px;color:#64748b;margin-top:8px;"></div>
-    <div id="memberList" style="margin-top:8px;"></div>
+
+
+    <!-- Member Lookup -->
+    <div class="collapsible-header" id="lookupToggle" onclick="toggleLookup()">
+      <h3>Member Lookup &amp; QR Code</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="collapsible-body" id="lookupBody">
+      <p style="font-size:13px;color:#64748b;margin-bottom:12px;">Search by name or member ID to view the account and send a QR code by email.</p>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <input type="text" id="lookupInput" placeholder="Name or Member ID" onkeydown="if(event.key==='Enter')doLookup()"
+          style="flex:1;min-width:200px;padding:10px 14px;font-size:14px;border:2px solid #e2e8f0;border-radius:8px;outline:none;">
+        <button class="blue" style="padding:10px 20px;font-size:14px;" onclick="doLookup()">Search</button>
+      </div>
+      <div id="lookupResult"></div>
+    </div>
 
     <!-- Guest Pass Management -->
     <div class="collapsible-header" id="passToggle" onclick="togglePasses()">
@@ -309,38 +320,6 @@ function gotCheckins(data) {
       '</tr>';
   }).join('');
   document.getElementById('checkinCount').textContent = rows.length;
-}
-
-// ── Member QR codes ──────────────────────────────────────────
-function loadMembers() {
-  document.getElementById('memberList').innerHTML = '';
-  document.getElementById('memberListStatus').textContent = 'Loading members...';
-  jsonp(API_URL + '?action=members&callback=gotMembers');
-}
-
-function gotMembers(members) {
-  document.getElementById('memberListStatus').textContent = '';
-  if (!members || !members.length) {
-    document.getElementById('memberList').innerHTML = '<p style="color:#c62828;">No members found.</p>';
-    return;
-  }
-  var html = '<table><thead><tr><th>ID</th><th>Name</th><th>Status</th><th style="text-align:center;">QR Code</th></tr></thead><tbody>';
-  members.forEach(function(m, i) {
-    var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(m.id);
-    var bg    = i % 2 === 0 ? '#fff' : '#f8fafc';
-    html += '<tr style="background:' + bg + ';">' +
-      '<td style="font-weight:600;">' + m.id + '</td>' +
-      '<td>' + m.name + '</td>' +
-      '<td><span class="badge ' + (m.status==='Active'?'green':'gray') + '">' + m.status + '</span></td>' +
-      '<td style="text-align:center;padding:8px;">' +
-        '<img src="' + qrUrl + '" width="80" height="80" ' +
-        'style="border:2px solid #1565C0;border-radius:6px;cursor:pointer;display:block;margin:0 auto;" ' +
-        'onclick="window.open(\'' + qrUrl + '\',\'_blank\')">' +
-      '</td></tr>';
-  });
-  html += '</tbody></table>';
-  html += '<p style="margin-top:8px;font-size:12px;color:#94a3b8;">Click QR to open full size. Right-click to save PNG.</p>';
-  document.getElementById('memberList').innerHTML = html;
 }
 
 // ── Guest pass management ─────────────────────────────────────
@@ -540,6 +519,102 @@ function confirmUsePass() {
   };
   jsonpOnce(API_URL + '?action=usepass&id=' + encodeURIComponent(modalMemberId) +
     '&passtype=' + passType + '&guests=' + guestCount + '&callback=' + cb);
+}
+
+// ── Member Lookup ─────────────────────────────────────────────
+var lookupOpen = false;
+
+function toggleLookup() {
+  lookupOpen = !lookupOpen;
+  document.getElementById('lookupToggle').classList.toggle('open', lookupOpen);
+  document.getElementById('lookupBody').classList.toggle('open', lookupOpen);
+}
+
+function doLookup() {
+  var input = document.getElementById('lookupInput').value.trim();
+  if (!input) return;
+  document.getElementById('lookupResult').innerHTML = '<p style="color:#64748b;font-size:13px;">Searching...</p>';
+  var cb = 'gotLookup_' + Date.now();
+  window[cb] = function(data) { renderLookup(data); };
+  jsonpOnce(API_URL + '?action=account&id=' + encodeURIComponent(input) + '&callback=' + cb);
+}
+
+function renderLookup(data) {
+  var el = document.getElementById('lookupResult');
+  if (!data || !data.found) {
+    // Try name search via members list
+    var cb2 = 'gotLookupByName_' + Date.now();
+    window[cb2] = function(members) {
+      var input = document.getElementById('lookupInput').value.trim().toLowerCase();
+      var match = (members || []).find(function(m) {
+        return m.name.toLowerCase().indexOf(input) > -1 ||
+               String(m.id).toLowerCase() === input;
+      });
+      if (match) {
+        var cb3 = 'gotLookupAcct_' + Date.now();
+        window[cb3] = function(acct) { renderLookupCard(acct); };
+        jsonpOnce(API_URL + '?action=account&id=' + encodeURIComponent(match.id) + '&callback=' + cb3);
+      } else {
+        el.innerHTML = '<p style="color:#c62828;font-size:13px;">Member not found.</p>';
+      }
+    };
+    jsonpOnce(API_URL + '?action=members&callback=' + cb2);
+    return;
+  }
+  renderLookupCard(data);
+}
+
+function renderLookupCard(data) {
+  var el = document.getElementById('lookupResult');
+  if (!data || !data.found) {
+    el.innerHTML = '<p style="color:#c62828;font-size:13px;">Member not found.</p>';
+    return;
+  }
+
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.id) + '&margin=8';
+
+  var depsHtml = '';
+  if (data.deps && data.deps.length) {
+    depsHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;">' +
+      '<div style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">Dependents</div>';
+    data.deps.forEach(function(d) {
+      depsHtml += '<div style="font-size:14px;color:#334155;">' + d.name +
+        (d.age !== null ? ' <span style="color:#94a3b8;">(Age ' + d.age + ')</span>' : ' <span style="color:#f59e0b;">No DOB on file</span>') +
+        '</div>';
+    });
+    depsHtml += '</div>';
+  }
+
+  el.innerHTML =
+    '<div style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">' +
+      '<div style="flex:1;min-width:200px;">' +
+        '<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:4px;">Member ID: ' + data.id + '</div>' +
+        '<div style="font-size:18px;font-weight:700;color:#0d2b5e;margin-bottom:4px;">' + (data.m1name || '—') + '</div>' +
+        (data.m2name ? '<div style="font-size:15px;color:#475569;margin-bottom:4px;">' + data.m2name + '</div>' : '') +
+        '<div style="font-size:13px;color:#2e7d32;font-weight:600;margin-bottom:8px;">' + (data.status || 'Active') + '</div>' +
+        depsHtml +
+        '<div style="margin-top:16px;">' +
+          '<button class="blue" style="padding:10px 18px;font-size:13px;" onclick="sendQREmail(' + JSON.stringify(data.id) + ', ' + JSON.stringify(data.m1name || '') + ')">&#9993; Email QR Code</button>' +
+        '</div>' +
+        '<div id="qrEmailMsg_' + data.id + '" style="font-size:13px;margin-top:8px;"></div>' +
+      '</div>' +
+      '<div style="text-align:center;">' +
+        '<img src="' + qrUrl + '" style="width:120px;height:120px;border:2px solid #1565C0;border-radius:8px;display:block;" />' +
+        '<div style="font-size:11px;color:#64748b;margin-top:4px;">Member ID: ' + data.id + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function sendQREmail(memberId, memberName) {
+  var msgEl = document.getElementById('qrEmailMsg_' + memberId);
+  if (msgEl) msgEl.innerHTML = '<span style="color:#64748b;">Sending...</span>';
+  var cb = 'gotQREmail_' + Date.now();
+  window[cb] = function(r) {
+    if (msgEl) msgEl.innerHTML = r.success
+      ? '<span style="color:#2e7d32;font-weight:600;">&#10003; QR code emailed to ' + memberName + '</span>'
+      : '<span style="color:#c62828;">Error: ' + (r.message || 'Could not send') + '</span>';
+  };
+  jsonpOnce(API_URL + '?action=sendqr&id=' + encodeURIComponent(memberId) + '&callback=' + cb);
 }
 
 // ── JSONP helpers ─────────────────────────────────────────────
