@@ -533,6 +533,7 @@ function toggleLookup() {
 function doLookup() {
   var input = document.getElementById('lookupInput').value.trim();
   if (!input) return;
+  window._lookupData = null;
   document.getElementById('lookupResult').innerHTML = '<p style="color:#64748b;font-size:13px;">Searching...</p>';
   var cb = 'gotLookup_' + Date.now();
   window[cb] = function(data) { renderLookup(data); };
@@ -613,29 +614,32 @@ function renderLookupCard(data) {
 
 
 function sendQREmail() {
-  var data   = window._lookupData;
+  var data = window._lookupData;
   if (!data) { alert('No member loaded.'); return; }
   var memberId   = data.id;
   var memberName = data.m1name || '';
-  var msgEl  = document.getElementById('qrEmailMsg');
-  var btn    = document.getElementById('qrEmailBtn');
+  var msgEl = document.getElementById('qrEmailMsg');
+  var btn   = document.getElementById('qrEmailBtn');
   if (msgEl) msgEl.innerHTML = '<span style="color:#64748b;">Sending...</span>';
   if (btn)   btn.disabled = true;
-  var cbName = 'gotQREmail' + Date.now();
-  window[cbName] = function(r) {
-    if (btn) btn.disabled = false;
-    if (msgEl) msgEl.innerHTML = r.success
-      ? '<span style="color:#2e7d32;font-weight:600;">&#10003; QR code emailed to ' + memberName + '</span>'
-      : '<span style="color:#c62828;">Error: ' + (r.message || 'Could not send') + '</span>';
-    delete window[cbName];
-  };
-  var s  = document.createElement('script');
-  s.src  = API_URL + '?action=sendqr&id=' + encodeURIComponent(memberId) + '&callback=' + cbName;
-  s.onerror = function() {
-    if (btn) btn.disabled = false;
-    if (msgEl) msgEl.innerHTML = '<span style="color:#c62828;">Connection error. Check deployment.</span>';
-  };
-  document.body.appendChild(s);
+
+  fetch(API_URL + '?action=sendqr&id=' + encodeURIComponent(memberId))
+    .then(function(resp) { return resp.text(); })
+    .then(function(text) {
+      var json = text.trim();
+      // Strip JSONP wrapper if present
+      var match = json.match(/^[^(]+\((.+)\);?$/s);
+      if (match) json = match[1];
+      var r = JSON.parse(json);
+      if (btn) btn.disabled = false;
+      if (msgEl) msgEl.innerHTML = r.success
+        ? '<span style="color:#2e7d32;font-weight:700;">&#10003; QR code emailed to ' + memberName + '</span>'
+        : '<span style="color:#c62828;">Error: ' + (r.message || 'Could not send') + '</span>';
+    })
+    .catch(function(err) {
+      if (btn) btn.disabled = false;
+      if (msgEl) msgEl.innerHTML = '<span style="color:#c62828;">Error: ' + err.message + '</span>';
+    });
 }
 
 // ── JSONP helpers ─────────────────────────────────────────────
