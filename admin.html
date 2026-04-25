@@ -571,19 +571,25 @@ function renderLookupCard(data) {
     return;
   }
 
-  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.id) + '&margin=8';
+  var qrUrl      = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.id) + '&margin=8';
+  var statusClr  = data.status === 'Active' ? '#2e7d32' : '#c62828';
+  var depsHtml   = '';
 
-  var depsHtml = '';
   if (data.deps && data.deps.length) {
     depsHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;">' +
       '<div style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">Dependents</div>';
     data.deps.forEach(function(d) {
       depsHtml += '<div style="font-size:14px;color:#334155;">' + d.name +
-        (d.age !== null ? ' <span style="color:#94a3b8;">(Age ' + d.age + ')</span>' : ' <span style="color:#f59e0b;">No DOB on file</span>') +
+        (d.age !== null && d.age !== undefined
+          ? ' <span style="color:#94a3b8;">(Age ' + d.age + ')</span>'
+          : ' <span style="color:#f59e0b;">No DOB on file</span>') +
         '</div>';
     });
     depsHtml += '</div>';
   }
+
+  // Store lookup data for use by button
+  window._lookupData = data;
 
   el.innerHTML =
     '<div style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">' +
@@ -591,12 +597,12 @@ function renderLookupCard(data) {
         '<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:4px;">Member ID: ' + data.id + '</div>' +
         '<div style="font-size:18px;font-weight:700;color:#0d2b5e;margin-bottom:4px;">' + (data.m1name || '—') + '</div>' +
         (data.m2name ? '<div style="font-size:15px;color:#475569;margin-bottom:4px;">' + data.m2name + '</div>' : '') +
-        '<div style="font-size:16px;font-weight:700;margin-bottom:8px;color:' + (data.status === 'Active' ? '#2e7d32' : '#c62828') + ';">' + (data.status || 'Active') + '</div>' +
+        '<div style="font-size:16px;font-weight:700;margin-bottom:8px;color:' + statusClr + ';">' + (data.status || 'Active') + '</div>' +
         depsHtml +
         '<div style="margin-top:16px;">' +
-          '<button class="blue" style="padding:10px 18px;font-size:13px;" onclick="sendQREmail(' + JSON.stringify(data.id) + ', ' + JSON.stringify(data.m1name || '') + ')">&#9993; Email QR Code</button>' +
+          '<button class="blue" id="qrEmailBtn" style="padding:10px 18px;font-size:13px;" onclick="sendQREmail()">&#9993; Email QR Code</button>' +
         '</div>' +
-        '<div id="qrEmailMsg_' + data.id + '" style="font-size:13px;margin-top:8px;"></div>' +
+        '<div id="qrEmailMsg" style="font-size:13px;margin-top:8px;"></div>' +
       '</div>' +
       '<div style="text-align:center;">' +
         '<img src="' + qrUrl + '" style="width:120px;height:120px;border:2px solid #1565C0;border-radius:8px;display:block;" />' +
@@ -605,18 +611,30 @@ function renderLookupCard(data) {
     '</div>';
 }
 
-function sendQREmail(memberId, memberName) {
-  var msgEl = document.getElementById('qrEmailMsg_' + memberId);
+
+function sendQREmail() {
+  var data   = window._lookupData;
+  if (!data) { alert('No member loaded.'); return; }
+  var memberId   = data.id;
+  var memberName = data.m1name || '';
+  var msgEl  = document.getElementById('qrEmailMsg');
+  var btn    = document.getElementById('qrEmailBtn');
   if (msgEl) msgEl.innerHTML = '<span style="color:#64748b;">Sending...</span>';
+  if (btn)   btn.disabled = true;
   var cbName = 'gotQREmail' + Date.now();
   window[cbName] = function(r) {
+    if (btn) btn.disabled = false;
     if (msgEl) msgEl.innerHTML = r.success
       ? '<span style="color:#2e7d32;font-weight:600;">&#10003; QR code emailed to ' + memberName + '</span>'
       : '<span style="color:#c62828;">Error: ' + (r.message || 'Could not send') + '</span>';
     delete window[cbName];
   };
-  var s = document.createElement('script');
-  s.src = API_URL + '?action=sendqr&id=' + encodeURIComponent(memberId) + '&callback=' + cbName;
+  var s  = document.createElement('script');
+  s.src  = API_URL + '?action=sendqr&id=' + encodeURIComponent(memberId) + '&callback=' + cbName;
+  s.onerror = function() {
+    if (btn) btn.disabled = false;
+    if (msgEl) msgEl.innerHTML = '<span style="color:#c62828;">Connection error. Check deployment.</span>';
+  };
   document.body.appendChild(s);
 }
 
