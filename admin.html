@@ -613,6 +613,12 @@ function renderLookupCard(data) {
 }
 
 
+function clearLookup() {
+  document.getElementById('lookupResult').innerHTML = '';
+  document.getElementById('lookupInput').value = '';
+  window._lookupData = null;
+}
+
 function sendQREmail() {
   var data = window._lookupData;
   if (!data) { alert('No member loaded.'); return; }
@@ -633,7 +639,8 @@ function sendQREmail() {
       var r = JSON.parse(json);
       if (btn) btn.disabled = false;
       if (msgEl) msgEl.innerHTML = r.success
-        ? '<span style="color:#2e7d32;font-weight:700;">&#10003; QR code emailed to ' + memberName + '</span>'
+        ? '<span style="color:#2e7d32;font-weight:700;">&#10003; QR code emailed to ' + memberName + '</span>' +
+          '<button onclick="clearLookup()" style="margin-left:12px;background:#f0f4f8;border:1px solid #cbd5e1;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#334155;">Close</button>'
         : '<span style="color:#c62828;">Error: ' + (r.message || 'Could not send') + '</span>';
     })
     .catch(function(err) {
