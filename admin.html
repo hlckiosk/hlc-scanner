@@ -335,43 +335,91 @@ function searchPasses() {
   var input = document.getElementById('passSearch').value.trim();
   if (!input) return;
   document.getElementById('passListWrap').innerHTML = '<p style="color:#64748b;font-size:13px;">Searching...</p>';
-  // First try exact ID via account lookup
-  var cb = 'gotPassAcct_' + Date.now();
-  window[cb] = function(acct) {
-    if (acct && acct.found) {
-      var cb2 = 'gotPassBal_' + Date.now();
-      window[cb2] = function(bal) {
-        renderPasses([{ id: acct.id, name: acct.m1name || acct.id, status: acct.status || 'Active', single: bal.singlePasses || 0, family: bal.familyPasses || 0 }]);
-      };
-      jsonpOnce(API_URL + '?action=allpasses&callback=' + cb2);
-    } else {
-      // Try name search via members list
-      var cb3 = 'gotPassMembers_' + Date.now();
-      window[cb3] = function(members) {
-        var q = input.toLowerCase();
-        var matches = (members || []).filter(function(m) {
-          return m.name.toLowerCase().indexOf(q) > -1 || String(m.id).toLowerCase() === q;
-        });
-        if (!matches.length) {
-          document.getElementById('passListWrap').innerHTML = '<p style="color:#c62828;font-size:13px;">No members found.</p>';
-          return;
-        }
-        // Get all passes then filter
-        var cb4 = 'gotPassAll_' + Date.now();
-        window[cb4] = function(data) {
-          var passes = data.passes || [];
-          var list = matches.map(function(m) {
-            var p = passes.find(function(x) { return String(x.id) === String(m.id); }) || {};
-            return { id: m.id, name: m.name, status: m.status || 'Active', single: p.single || 0, family: p.family || 0 };
-          });
-          renderPasses(list);
-        };
-        jsonpOnce(API_URL + '?action=allpasses&callback=' + cb4);
-      };
-      jsonpOnce(API_URL + '?action=members&callback=' + cb3);
+
+  // Step 1: search members list by name or ID
+  var cb = 'gotPassSearch_' + Date.now();
+  window[cb] = function(members) {
+    var q = input.toLowerCase();
+    var match = (members || []).find(function(m) {
+      return String(m.id).toLowerCase() === q ||
+             m.name.toLowerCase().indexOf(q) > -1;
+    });
+    if (!match) {
+      document.getElementById('passListWrap').innerHTML = '<p style="color:#c62828;font-size:13px;">No member found.</p>';
+      return;
     }
+    // Step 2: get full account (M1, M2, deps, status)
+    var cb2 = 'gotPassAcct_' + Date.now();
+    window[cb2] = function(acct) {
+      if (!acct || !acct.found) {
+        document.getElementById('passListWrap').innerHTML = '<p style="color:#c62828;font-size:13px;">Could not load account.</p>';
+        return;
+      }
+      // Step 3: get pass balances
+      var cb3 = 'gotPassAll_' + Date.now();
+      window[cb3] = function(data) {
+        var passes  = data.passes || [];
+        var p       = passes.find(function(x) { return String(x.id) === String(acct.id); }) || {};
+        renderPassAccount(acct, p.single || 0, p.family || 0);
+      };
+      jsonpOnce(API_URL + '?action=allpasses&callback=' + cb3);
+    };
+    jsonpOnce(API_URL + '?action=account&id=' + encodeURIComponent(match.id) + '&callback=' + cb2);
   };
-  jsonpOnce(API_URL + '?action=account&id=' + encodeURIComponent(input) + '&callback=' + cb);
+  jsonpOnce(API_URL + '?action=members&callback=' + cb);
+}
+
+function renderPassAccount(acct, single, family) {
+  var statusClr = acct.status === 'Active' ? '#2e7d32' : '#c62828';
+  var id        = String(acct.id);
+
+  // Build members on account list
+  var peopleHtml = '';
+  if (acct.m1name) peopleHtml += '<div style="font-size:14px;color:#334155;margin-bottom:2px;">&#8226; ' + acct.m1name + ' <span style="color:#64748b;font-size:12px;">(Member 1)</span></div>';
+  if (acct.m2name) peopleHtml += '<div style="font-size:14px;color:#334155;margin-bottom:2px;">&#8226; ' + acct.m2name + ' <span style="color:#64748b;font-size:12px;">(Member 2)</span></div>';
+  (acct.deps || []).forEach(function(d) {
+    peopleHtml += '<div style="font-size:14px;color:#334155;margin-bottom:2px;">&#8226; ' + d.name +
+      (d.age !== null && d.age !== undefined ? ' <span style="color:#94a3b8;font-size:12px;">(Age ' + d.age + ')</span>' : ' <span style="color:#f59e0b;font-size:12px;">(No DOB)</span>') +
+      '</div>';
+  });
+
+  var html =
+    '<div style="margin-bottom:8px;text-align:right;">' +
+      '<button onclick="closePasses()" style="background:#f9a825;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;color:#1a1a1a;">✕ Close Guest Pass Management</button>' +
+    '</div>' +
+    '<div style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:20px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #e2e8f0;">' +
+        '<div>' +
+          '<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;">Member ID: ' + id + '</div>' +
+          '<div style="font-size:17px;font-weight:700;color:#0d2b5e;">' + (acct.m1name || '—') + '</div>' +
+          '<div style="font-size:14px;font-weight:700;color:' + statusClr + ';margin-top:2px;">' + (acct.status || 'Active') + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Pass Balance</div>' +
+          '<div style="display:flex;gap:16px;">' +
+            '<div style="text-align:center;">' +
+              '<div style="font-size:26px;font-weight:700;color:#1565C0;" id="single_' + id + '">' + single + '</div>' +
+              '<div style="font-size:11px;color:#64748b;font-weight:600;">Single</div>' +
+            '</div>' +
+            '<div style="text-align:center;">' +
+              '<div style="font-size:26px;font-weight:700;color:#1565C0;" id="family_' + id + '">' + family + '</div>' +
+              '<div style="font-size:11px;color:#64748b;font-weight:600;">Family</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-bottom:14px;">' +
+        '<div style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:8px;">Members on this account</div>' +
+        peopleHtml +
+      '</div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+        '<button class="hist-btn" data-id="' + id + '" onclick="toggleHistory(this.dataset.id)">History</button>' +
+        '<button class="hist-btn" style="background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7;" data-id="' + id + '" data-name="' + (acct.m1name || '').replace(/"/g,'&quot;') + '" onclick="openUsePassModal(this.dataset.id, this.dataset.name)">Use Pass</button>' +
+      '</div>' +
+      '<div id="hist_' + id + '" style="display:none;background:#f0f4f8;border-radius:8px;padding:10px 14px;margin-top:10px;"></div>' +
+    '</div>';
+
+  document.getElementById('passListWrap').innerHTML = html;
 }
 
 function closePasses() {
