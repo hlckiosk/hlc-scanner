@@ -593,8 +593,10 @@ function renderLookupCard(data) {
   window._lookupData = data;
 
   el.innerHTML =
-    '<div style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;position:relative;">' +
-      '<button onclick="clearLookup()" style="position:absolute;top:12px;right:12px;background:#f0f4f8;border:1px solid #cbd5e1;border-radius:6px;padding:4px 12px;font-size:13px;font-weight:600;cursor:pointer;color:#334155;">✕ Close</button>' +
+    '<div style="margin-bottom:8px;text-align:right;">' +
+      '<button onclick="clearLookup()" style="background:#f9a825;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;color:#1a1a1a;">✕ Close Member Lookup</button>' +
+    '</div>' +
+    '<div style="background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">' +
       '<div style="flex:1;min-width:200px;">' +
         '<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:4px;">Member ID: ' + data.id + '</div>' +
         '<div style="font-size:18px;font-weight:700;color:#0d2b5e;margin-bottom:4px;">' + (data.m1name || '—') + '</div>' +
