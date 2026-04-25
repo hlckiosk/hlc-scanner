@@ -150,11 +150,13 @@ tr:nth-child(even) td { background: #f8fafc; }
       <span class="chevron">▼</span>
     </div>
     <div class="collapsible-body" id="passBody">
-      <p style="font-size:13px;color:#64748b;margin-bottom:12px;">Add or remove prepaid guest passes. Single pass = 1 guest. Family pass = up to 6 guests.</p>
-      <input type="text" class="pass-search" id="passSearch" placeholder="Search by name or member ID..." oninput="filterPasses()" />
-      <div id="passListWrap">
-        <button class="blue" style="padding:8px 16px;font-size:13px;" onclick="loadPasses()">Load Pass Balances</button>
+      <p style="font-size:13px;color:#64748b;margin-bottom:12px;">Search by name or member ID to view and manage guest passes.</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input type="text" class="pass-search" id="passSearch" placeholder="Name or Member ID..." onkeydown="if(event.key==='Enter')searchPasses()"
+          style="flex:1;min-width:180px;">
+        <button class="blue" style="padding:10px 18px;font-size:13px;" onclick="searchPasses()">Search</button>
       </div>
+      <div id="passListWrap"></div>
       <div id="passMsg" style="font-size:13px;color:#64748b;margin-top:8px;"></div>
     </div>
 
@@ -327,49 +329,59 @@ function togglePasses() {
   passesOpen = !passesOpen;
   document.getElementById('passToggle').classList.toggle('open', passesOpen);
   document.getElementById('passBody').classList.toggle('open', passesOpen);
-  if (passesOpen && !allPassData.length) loadPasses();
 }
 
-function loadPasses() {
-  document.getElementById('passListWrap').innerHTML = '<p style="color:#64748b;font-size:13px;">Loading...</p>';
-  jsonp(API_URL + '?action=members&callback=gotPassMembers');
-}
-
-function gotPassMembers(members) {
-  if (!members || !members.length) {
-    document.getElementById('passListWrap').innerHTML = '<p style="color:#c62828;">No members found.</p>';
-    return;
-  }
-  allPassData = members.map(function(m) {
-    return { id: m.id, name: m.name, single: 0, family: 0 };
-  });
-  jsonp(API_URL + '?action=allpasses&callback=gotAllPasses');
-}
-
-function gotAllPasses(data) {
-  if (data && data.passes) {
-    data.passes.forEach(function(p) {
-      var m = allPassData.find(function(x) { return x.id === p.id; });
-      if (m) { m.single = p.single || 0; m.family = p.family || 0; }
-    });
-  }
-  renderPasses(allPassData);
+function searchPasses() {
+  var input = document.getElementById('passSearch').value.trim();
+  if (!input) return;
+  document.getElementById('passListWrap').innerHTML = '<p style="color:#64748b;font-size:13px;">Searching...</p>';
+  // First try exact ID via account lookup
+  var cb = 'gotPassAcct_' + Date.now();
+  window[cb] = function(acct) {
+    if (acct && acct.found) {
+      // Get pass balance too
+      var cb2 = 'gotPassBal_' + Date.now();
+      window[cb2] = function(bal) {
+        renderPasses([{ id: acct.id, name: acct.m1name || acct.id, single: bal.singlePasses || 0, family: bal.familyPasses || 0 }]);
+      };
+      jsonpOnce(API_URL + '?action=allpasses&callback=' + cb2);
+    } else {
+      // Try name search via members list
+      var cb3 = 'gotPassMembers_' + Date.now();
+      window[cb3] = function(members) {
+        var q = input.toLowerCase();
+        var matches = (members || []).filter(function(m) {
+          return m.name.toLowerCase().indexOf(q) > -1 || String(m.id).toLowerCase() === q;
+        });
+        if (!matches.length) {
+          document.getElementById('passListWrap').innerHTML = '<p style="color:#c62828;font-size:13px;">No members found.</p>';
+          return;
+        }
+        // Get all passes then filter
+        var cb4 = 'gotPassAll_' + Date.now();
+        window[cb4] = function(data) {
+          var passes = data.passes || [];
+          var list = matches.map(function(m) {
+            var p = passes.find(function(x) { return String(x.id) === String(m.id); }) || {};
+            return { id: m.id, name: m.name, single: p.single || 0, family: p.family || 0 };
+          });
+          renderPasses(list);
+        };
+        jsonpOnce(API_URL + '?action=allpasses&callback=' + cb4);
+      };
+      jsonpOnce(API_URL + '?action=members&callback=' + cb3);
+    }
+  };
+  jsonpOnce(API_URL + '?action=account&id=' + encodeURIComponent(input) + '&callback=' + cb);
 }
 
 function closePasses() {
-  document.getElementById('passListWrap').innerHTML =
-    '<button class="blue" style="padding:8px 16px;font-size:13px;" onclick="loadPasses()">Load Pass Balances</button>';
+  document.getElementById('passListWrap').innerHTML = '';
   document.getElementById('passSearch').value = '';
   allPassData = [];
 }
 
-function filterPasses() {
-  var q = document.getElementById('passSearch').value.toLowerCase();
-  var filtered = allPassData.filter(function(m) {
-    return m.name.toLowerCase().indexOf(q) > -1 || String(m.id).toLowerCase().indexOf(q) > -1;
-  });
-  renderPasses(filtered);
-}
+function filterPasses() { searchPasses(); }
 
 function renderPasses(list) {
   if (!list.length) {
