@@ -339,10 +339,9 @@ function searchPasses() {
   var cb = 'gotPassAcct_' + Date.now();
   window[cb] = function(acct) {
     if (acct && acct.found) {
-      // Get pass balance too
       var cb2 = 'gotPassBal_' + Date.now();
       window[cb2] = function(bal) {
-        renderPasses([{ id: acct.id, name: acct.m1name || acct.id, single: bal.singlePasses || 0, family: bal.familyPasses || 0 }]);
+        renderPasses([{ id: acct.id, name: acct.m1name || acct.id, status: acct.status || 'Active', single: bal.singlePasses || 0, family: bal.familyPasses || 0 }]);
       };
       jsonpOnce(API_URL + '?action=allpasses&callback=' + cb2);
     } else {
@@ -363,7 +362,7 @@ function searchPasses() {
           var passes = data.passes || [];
           var list = matches.map(function(m) {
             var p = passes.find(function(x) { return String(x.id) === String(m.id); }) || {};
-            return { id: m.id, name: m.name, single: p.single || 0, family: p.family || 0 };
+            return { id: m.id, name: m.name, status: m.status || 'Active', single: p.single || 0, family: p.family || 0 };
           });
           renderPasses(list);
         };
