@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HLC Staff Guide">
+<title>HLC Admin Staff Guide</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #1a1a1a; min-height: 100vh; }
+
+/* TOP BAR */
+.top-bar { background: #0d2b5e; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.top-bar-title { color: white; font-size: 16px; font-weight: 700; }
+.top-bar-sub { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 2px; }
+
+/* NAV TABS */
+.nav { display: flex; overflow-x: auto; background: #1565C0; padding: 0 12px; gap: 4px; scrollbar-width: none; }
+.nav::-webkit-scrollbar { display: none; }
+.nav-btn { background: transparent; border: none; color: rgba(255,255,255,0.7); padding: 12px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.15s; }
+.nav-btn.active { color: white; border-bottom-color: #fff176; }
+.nav-btn:hover { color: white; }
+
+/* CONTENT */
+.content { max-width: 800px; margin: 0 auto; padding: 20px 16px 40px; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* CARDS */
+.card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.card-title { font-size: 16px; font-weight: 700; color: #0d2b5e; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #f0f4f8; }
+.card-title .icon { font-size: 18px; margin-right: 8px; }
+
+/* TEXT */
+p { font-size: 14px; line-height: 1.7; color: #334155; margin-bottom: 10px; }
+.label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.value { font-size: 15px; font-weight: 700; color: #0d2b5e; margin-bottom: 12px; }
+.mono { font-family: monospace; background: #f0f4f8; padding: 3px 8px; border-radius: 4px; font-size: 13px; color: #0d2b5e; word-break: break-all; }
+.pw { font-family: monospace; background: #fff8e1; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 15px; color: #7a5c00; }
+
+/* NOTE BOX */
+.note { background: #e8f0fe; border-left: 4px solid #1565C0; border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 12px 0; font-size: 13px; color: #1565C0; font-style: italic; }
+.warn { background: #fff8e1; border-left: 4px solid #f9a825; border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 12px 0; font-size: 13px; color: #7a5c00; }
+
+/* STEPS */
+.step { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+.step-num { background: #1565C0; color: white; font-weight: 700; font-size: 13px; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.step-text { font-size: 14px; line-height: 1.6; color: #334155; flex: 1; padding-top: 4px; }
+.step-text strong { color: #0d2b5e; }
+
+/* TABLE */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+.tbl th { background: #0d2b5e; color: white; padding: 9px 12px; text-align: left; }
+.tbl td { padding: 8px 12px; border-bottom: 1px solid #f0f4f8; vertical-align: top; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:nth-child(even) td { background: #f8fafc; }
+
+/* BADGES */
+.badge-green { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+.badge-red   { display: inline-block; background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+.badge-blue  { display: inline-block; background: #e8f0fe; color: #1565C0; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+
+/* LIST */
+ul { margin: 8px 0 12px 20px; }
+li { font-size: 14px; line-height: 1.7; color: #334155; margin-bottom: 3px; }
+li li { font-size: 13px; color: #475569; }
+
+/* QUICK REF */
+.qr-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f4f8; gap: 12px; }
+.qr-row:last-child { border-bottom: none; }
+.qr-task { font-size: 14px; color: #334155; flex: 1; }
+.qr-where { font-size: 13px; color: #1565C0; font-weight: 600; text-align: right; }
+
+/* PASS DISPLAY */
+.pass-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.pass-box { background: #f0f4f8; border-radius: 10px; padding: 14px; text-align: center; }
+.pass-box .num { font-size: 32px; font-weight: 700; color: #1565C0; }
+.pass-box .lbl { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <div class="top-bar-title">HLC Admin Staff Guide</div>
+    <div class="top-bar-sub">High Lane Club · Confidential</div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('access')">Access</button>
+  <button class="nav-btn" onclick="showSection('dashboard')">Dashboard</button>
+  <button class="nav-btn" onclick="showSection('checkins')">Check-ins</button>
+  <button class="nav-btn" onclick="showSection('lookup')">Member Lookup</button>
+  <button class="nav-btn" onclick="showSection('passes')">Guest Passes</button>
+  <button class="nav-btn" onclick="showSection('kiosk')">Kiosk</button>
+  <button class="nav-btn" onclick="showSection('quickref')">Quick Ref</button>
+</div>
+
+<div class="content">
+
+  <!-- ACCESS -->
+  <div id="section-access" class="section active">
+    <div class="card">
+      <div class="card-title"><span class="icon">🔐</span> Accessing the Admin Portal</div>
+      <p>The admin portal works in any browser on any device — phone, tablet, or computer.</p>
+      <div class="label">Portal URL</div>
+      <div class="value"><span class="mono">https://hlckiosk.github.io/hlc-scanner/admin.html</span></div>
+      <div class="label">Password</div>
+      <div class="value"><span class="pw">hlc2026</span></div>
+      <div class="warn">Keep the password confidential. Do not share with members or guests.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📱</span> Add to iPad Home Screen</div>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Open Safari and go to the admin portal URL above.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Tap the <strong>Share</strong> button (square with arrow pointing up).</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Scroll down and tap <strong>Add to Home Screen</strong>.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Name it <strong>HLC Admin</strong> and tap <strong>Add</strong>.</div></div>
+      <div class="note">The admin portal icon will appear on your iPad home screen for one-tap access.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔑</span> All Passwords</div>
+      <table class="tbl">
+        <tr><th>System</th><th>Password</th><th>Who</th></tr>
+        <tr><td>Admin Portal</td><td><span class="pw">hlc2026</span></td><td>Staff only</td></tr>
+        <tr><td>Kiosk Admin (5-tap)</td><td><span class="pw">hlc2026</span></td><td>Staff only</td></tr>
+        <tr><td>Member Directory</td><td><span class="pw">HLCMembership2026</span></td><td>All members</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="section-dashboard" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> Today's Stats</div>
+      <p>The four cards at the top show today's activity at a glance.</p>
+      <table class="tbl">
+        <tr><th>Stat</th><th>What it Shows</th></tr>
+        <tr><td><strong>Total People</strong></td><td>Everyone who checked in today — members and guests combined</td></tr>
+        <tr><td><strong>Check-ins</strong></td><td>Number of individual check-in events logged</td></tr>
+        <tr><td><strong>Members</strong></td><td>Total member headcount for the day</td></tr>
+        <tr><td><strong>Guests</strong></td><td>Total guest headcount for the day</td></tr>
+      </table>
+      <div class="note">Click <strong>Refresh</strong> at the top right to reload the latest data.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🏊</span> Area Usage Today</div>
+      <p>A table showing which areas have been used today and how many times — Pool, Tennis, Pickleball, Bowling, Event, and Other. The bar gives a quick visual comparison.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📅</span> Daily Totals History</div>
+      <p>A full history of all past days with member counts, guest counts, payment counts, and per-area breakdowns. Most recent days appear at the top. Scroll right to see all columns.</p>
+    </div>
+  </div>
+
+  <!-- CHECK-INS -->
+  <div id="section-checkins" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">✅</span> Today's Check-ins</div>
+      <p>Click the <strong>Today's Check-ins</strong> bar on the dashboard to expand it. Shows every check-in from today, most recent first.</p>
+      <div class="note">Click <strong>Refresh</strong> inside the check-ins section to reload the latest entries.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> Column Guide</div>
+      <table class="tbl">
+        <tr><th>Column</th><th>Description</th></tr>
+        <tr><td><strong>Time</strong></td><td>Time of check-in</td></tr>
+        <tr><td><strong>Name</strong></td><td>Member name(s) who checked in</td></tr>
+        <tr><td><strong>Member ID</strong></td><td>Household member number</td></tr>
+        <tr><td><strong>Status</strong></td><td><span class="badge-green">Active</span> or <span class="badge-red">Inactive</span></td></tr>
+        <tr><td><strong>Family</strong></td><td>Number of household members checked in</td></tr>
+        <tr><td><strong>Area</strong></td><td>Area(s) used</td></tr>
+        <tr><td><strong>Guests</strong></td><td>Number of guests</td></tr>
+        <tr><td><strong>Guest Names</strong></td><td>Names entered at check-in</td></tr>
+        <tr><td><strong>Payment / Pass</strong></td><td>
+          <span class="badge-blue">Prepaid: single pass used</span><br><br>
+          <span class="badge-blue">Prepaid: family pass used</span><br><br>
+          <span style="background:#fef3c7;color:#92400e;display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;">Payment link</span><br><br>
+          <span style="color:#94a3b8;font-size:13px;">(blank) = no payment needed</span>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- MEMBER LOOKUP -->
+  <div id="section-lookup" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">🔍</span> Looking Up a Member</div>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Click <strong>Member Lookup &amp; QR Code</strong> to expand the section.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Type the member's name or member ID in the search box.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Press <strong>Enter</strong> or click <strong>Search</strong>.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">The member's account card appears showing Member 1, Member 2, dependents with ages, and status.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">✉️</span> Emailing a QR Code</div>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Look up the member using the steps above.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Click <strong>✉ Email QR Code</strong>.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Wait for the confirmation: <em>✓ QR code emailed to [Name]</em>.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Click <strong>✕ Close Member Lookup</strong> when done.</div></div>
+      <div class="note">The email goes to the primary email on file. The member receives their QR code image, member ID, and a link to update their account.</div>
+      <div class="warn">If no email is on file, an error message will appear. Ask the member to update their account.</div>
+    </div>
+  </div>
+
+  <!-- PASSES -->
+  <div id="section-passes" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">🎟</span> Pass Types</div>
+      <div class="pass-grid">
+        <div class="pass-box"><div class="num">1</div><div class="lbl">Single Pass<br>= 1 guest</div></div>
+        <div class="pass-box"><div class="num">6</div><div class="lbl">Family Pass<br>= up to 6 guests</div></div>
+      </div>
+      <p>Members receive <strong>2 single guest passes</strong> automatically when they submit the member update form. Additional passes can be added manually in the Members sheet after payment.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔍</span> Looking Up a Member's Passes</div>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Click <strong>Guest Pass Management</strong> to expand the section.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Type the member's name or member ID and press <strong>Enter</strong> or click <strong>Search</strong>.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">The account card shows name, status, pass balances, and all members on the account.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">✅</span> Using a Pass (Staff Override)</div>
+      <p>If a member needs to use a pass at the desk rather than at the kiosk:</p>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Look up the member.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Click <strong>Use Pass</strong> (green button).</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Select <strong>Single Pass</strong> or <strong>Family Pass</strong>.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Enter the number of guests.</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text">Enter guest name(s) — separate multiple names with commas.</div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-text">Check the area(s) being used.</div></div>
+      <div class="step"><div class="step-num">7</div><div class="step-text">Click <strong>Use Pass &amp; Check In</strong>.</div></div>
+      <div class="note">The pass balance decrements automatically, the check-in is logged, and the Last Pass Used date is recorded.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📜</span> Viewing Pass History</div>
+      <p>Click the <strong>History</strong> button next to any member to see a full log of every pass transaction — date, time, pass type, action, change amount, and running balance.</p>
+      <div class="note">The PassHistory tab in the Members spreadsheet has the full transaction log. Columns AR (Single), AS (Family), and AT (Last Used) show the current state.</div>
+    </div>
+  </div>
+
+  <!-- KIOSK -->
+  <div id="section-kiosk" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">📱</span> Kiosk Admin Access (iPad)</div>
+      <p>The check-in kiosk has a hidden admin panel for quick on-site stats.</p>
+      <div class="step"><div class="step-num">1</div><div class="step-text">On the kiosk home screen, tap the <strong>bottom-right corner</strong> of the screen <strong>5 times quickly</strong> within 3 seconds.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">The admin login screen appears.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Enter the password: <span class="pw">hlc2026</span></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Today's stats, area usage, and history are shown.</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text">Tap <strong>Exit</strong> to return to the check-in screen.</div></div>
+      <div class="warn">The kiosk admin shows stats only — use the full admin portal to manage passes or look up members.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">ℹ️</span> Other Kiosk URLs</div>
+      <table class="tbl">
+        <tr><th>Page</th><th>URL</th></tr>
+        <tr><td>Check-in Kiosk</td><td><span class="mono" style="font-size:11px;">script.google.com/macros/s/AKfy.../exec</span></td></tr>
+        <tr><td>Admin Portal</td><td><span class="mono" style="font-size:11px;">hlckiosk.github.io/hlc-scanner/admin.html</span></td></tr>
+        <tr><td>Member Directory</td><td><span class="mono" style="font-size:11px;">hlckiosk.github.io/hlc-scanner/directory.html</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- QUICK REF -->
+  <div id="section-quickref" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">⚡</span> Quick Reference</div>
+      <div class="qr-row"><div class="qr-task">See who checked in today</div><div class="qr-where">Today's Check-ins</div></div>
+      <div class="qr-row"><div class="qr-task">Look up a member</div><div class="qr-where">Member Lookup & QR Code</div></div>
+      <div class="qr-row"><div class="qr-task">Email member their QR code</div><div class="qr-where">Member Lookup → ✉ Email QR</div></div>
+      <div class="qr-row"><div class="qr-task">Check a member's pass balance</div><div class="qr-where">Guest Pass Mgmt → Search</div></div>
+      <div class="qr-row"><div class="qr-task">Use a pass for a member</div><div class="qr-where">Guest Pass Mgmt → Use Pass</div></div>
+      <div class="qr-row"><div class="qr-task">See pass transaction history</div><div class="qr-where">Guest Pass Mgmt → History</div></div>
+      <div class="qr-row"><div class="qr-task">View area usage today</div><div class="qr-where">Dashboard → Area Usage</div></div>
+      <div class="qr-row"><div class="qr-task">See all past check-in days</div><div class="qr-where">Dashboard → Daily Totals</div></div>
+      <div class="qr-row"><div class="qr-task">Refresh all data</div><div class="qr-where">Refresh button (top right)</div></div>
+      <div class="qr-row"><div class="qr-task">Access kiosk admin on iPad</div><div class="qr-where">Tap corner 5 times → hlc2026</div></div>
+      <div class="qr-row"><div class="qr-task">Sign out</div><div class="qr-where">Sign Out button (top right)</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔑</span> Passwords</div>
+      <table class="tbl">
+        <tr><th>System</th><th>Password</th></tr>
+        <tr><td>Admin Portal</td><td><span class="pw">hlc2026</span></td></tr>
+        <tr><td>Kiosk Admin (5-tap)</td><td><span class="pw">hlc2026</span></td></tr>
+        <tr><td>Member Directory</td><td><span class="pw">HLCMembership2026</span></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📞</span> Contact</div>
+      <p style="text-align:center;color:#64748b;">High Lane Club<br>office@highlaneclub.com</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('section-' + id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
