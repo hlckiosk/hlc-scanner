@@ -1,327 +1,1054 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>HLC QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; min-height: 100vh; color: #1a1a2e; }
 
-    body {
-      background: #000;
-      color: white;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      height: 100vh;
-      overflow: hidden;
-    }
+    .screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: flex-start; padding: 30px 20px 40px; overflow-y: auto; animation: fadeIn 0.2s ease; }
+    .screen.active { display: flex; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-    /* Full-screen video */
-    #video {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
+    #screen-home    { background: linear-gradient(160deg, #0d2b5e 0%, #1565C0 100%); }
+    #screen-success { background: #1b5e20; }
+    #screen-admin   { background: #0d2b5e; }
 
-    /* UI layer on top of video */
-    #ui {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
+    .card { background: white; border-radius: 20px; padding: 44px 40px; width: 100%; max-width: 660px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); text-align: center; margin: auto; }
+    #screen-home .card { max-width: 960px; padding: 44px 56px; }
+    #screen-admin .card { max-width: 700px; text-align: left; }
 
-    /* Dark surround — we draw this with box-shadow on the scan box */
-    #scan-box {
-      width: min(70vw, 70vh);
-      height: min(70vw, 70vh);
-      border: 3px solid #1565C0;
-      border-radius: 16px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
-      position: relative;
-      flex-shrink: 0;
-    }
+    .logo { width: 160px; display: block; margin: 0 auto 16px; }
 
-    /* Corner marks */
-    .corner {
-      position: absolute;
-      width: 32px; height: 32px;
-      border-color: white;
-      border-style: solid;
-    }
-    .tl { top:-3px; left:-3px;  border-width:5px 0 0 5px; border-radius:8px 0 0 0; }
-    .tr { top:-3px; right:-3px; border-width:5px 5px 0 0; border-radius:0 8px 0 0; }
-    .bl { bottom:-3px; left:-3px;  border-width:0 0 5px 5px; border-radius:0 0 0 8px; }
-    .br { bottom:-3px; right:-3px; border-width:0 5px 5px 0; border-radius:0 0 8px 0; }
+    h1 { font-size: 34px; font-weight: 700; color: #0d2b5e; margin-bottom: 10px; line-height: 1.3; }
+    h2 { font-size: 28px; font-weight: 700; color: #0d2b5e; margin-bottom: 14px; }
+    h3 { font-size: 20px; font-weight: 600; color: #334155; margin: 20px 0 10px; }
+    .subtitle { font-size: 18px; color: #64748b; margin-bottom: 14px; line-height: 1.6; }
+    .step-label { font-size: 14px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #1565C0; margin-bottom: 10px; }
 
-    /* Animated scan line */
-    #scan-line {
-      position: absolute;
-      left: 10px; right: 10px; height: 3px;
-      background: linear-gradient(to right, transparent, #42a5f5, #90caf9, #42a5f5, transparent);
-      border-radius: 2px;
-      animation: scan 2s ease-in-out infinite alternate;
-    }
-    @keyframes scan {
-      from { top: 10px; }
-      to   { top: calc(100% - 13px); }
-    }
+    .btn { display: block; width: 100%; max-width: 480px; margin: 12px auto; padding: 22px 24px; font-size: 22px; font-weight: 600; border: none; border-radius: 14px; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #1565C0; color: white; }
+    .btn-primary:hover { background: #1251a3; }
+    .btn-outline { background: white; color: #1565C0; border: 2px solid #1565C0; }
+    .btn-outline:hover { background: #e8f0fe; }
+    .btn-danger { background: #c62828; color: white; }
+    .btn-home { background: #1565C0; color: white; border: none; padding: 12px 26px; font-size: 17px; font-weight: 600; border-radius: 8px; cursor: pointer; margin-bottom: 22px; align-self: flex-start; }
 
-    #label {
-      margin-top: 30px;
-      font-size: 20px;
-      font-weight: 700;
-      text-align: center;
-      text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+    input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="password"] {
+      width: 100%; max-width: 480px; padding: 20px 22px; font-size: 20px;
+      border: 2px solid #cbd5e1; border-radius: 12px; margin: 10px auto;
+      display: block; text-align: center; background: #f8fafc; color: #1a1a2e;
+      outline: none; transition: border-color 0.15s;
     }
-    #sublabel {
-      margin-top: 10px;
-      font-size: 15px;
-      color: #90caf9;
-      text-align: center;
-      max-width: 300px;
-      line-height: 1.5;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-    }
+    input:focus { border-color: #1565C0; background: white; }
 
-    #cancel-btn {
-      margin-top: 32px;
-      background: rgba(0,0,0,0.65);
-      color: white;
-      border: 2px solid rgba(255,255,255,0.5);
-      padding: 14px 32px;
-      font-size: 17px;
-      font-weight: 600;
-      border-radius: 10px;
-      cursor: pointer;
-    }
+    .divider { display: flex; align-items: center; gap: 14px; margin: 16px auto; max-width: 480px; color: #94a3b8; font-size: 16px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
 
-    /* Success flash */
-    #success {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(21,101,192,0.85);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      font-size: 26px;
-      font-weight: 700;
-    }
-    #success.show { display: flex; }
-    #success .tick { font-size: 80px; }
+    .result-box { border-radius: 12px; padding: 18px 22px; font-size: 19px; font-weight: 600; margin: 16px auto; max-width: 500px; }
+    .result-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .result-error   { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+    .result-info    { background: #e3f2fd; color: #1565C0; border: 1px solid #90caf9; }
+    .result-warn    { background: #fff8e1; color: #7a5c00; border: 1px solid #f9a825; }
 
-    /* Error screen */
-    #error-screen {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: #111;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      gap: 20px;
-      text-align: center;
-    }
-    #error-screen.show { display: flex; }
-    #error-screen h2 { font-size: 22px; color: #ef9a9a; }
-    #error-screen p  { font-size: 15px; color: #90a4ae; line-height: 1.7; max-width: 320px; }
-    .retry-btn {
-      background: #1565C0; color: white;
-      border: none; padding: 16px 32px;
-      font-size: 17px; font-weight: 600;
-      border-radius: 10px; cursor: pointer;
-    }
-    .back-btn {
-      background: transparent; color: #90a4ae;
-      border: 2px solid #90a4ae;
-      padding: 14px 28px; font-size: 16px;
-      font-weight: 600; border-radius: 10px;
-      cursor: pointer;
-    }
+    .checkbox-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px auto 6px; max-width: 520px; }
+    .checkbox-pill input[type="checkbox"] { display: none; }
+    .checkbox-pill label { display: inline-block; padding: 13px 22px; border-radius: 30px; border: 2px solid #1565C0; color: #1565C0; font-size: 18px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; user-select: none; }
+    .checkbox-pill input[type="checkbox"]:checked + label { background: #1565C0; color: white; }
+    .checkbox-pill.disabled label { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+    .checkbox-pill.disabled input[type="checkbox"] { pointer-events: none; }
 
-    canvas { display: none; }
+    /* Person selection cards */
+    .person-list { display: flex; flex-direction: column; gap: 12px; margin: 16px auto; max-width: 480px; text-align: left; }
+    .person-card { display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .person-card:hover { border-color: #1565C0; background: #e8f0fe; }
+    .person-card.selected { border-color: #1565C0; background: #e8f0fe; }
+    .person-card.blocked  { border-color: #ef9a9a; background: #ffebee; cursor: not-allowed; opacity: 0.8; }
+    .person-card input[type="checkbox"] { width: 24px; height: 24px; accent-color: #1565C0; flex-shrink: 0; cursor: pointer; }
+    .person-card.blocked input[type="checkbox"] { cursor: not-allowed; }
+    .pass-option { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; padding: 20px 22px; cursor: pointer; transition: border-color 0.15s, background 0.15s; text-align: left; width: 100%; }
+    .pass-option:hover { border-color: #1565C0; background: #e8f0fe; }
+    .pass-option.selected { border-color: #0d2b5e; background: #d0e0f8; }
+    .pass-option h3 { font-size: 18px; color: #0d2b5e; margin: 0 0 4px; }
+    .pass-option p  { font-size: 14px; color: #64748b; margin: 0; }
+    .pass-option .pass-badge { display:inline-block; background:#1565C0; color:white; font-size:12px; font-weight:700; padding:2px 10px; border-radius:99px; margin-bottom:8px; }
+    .person-info { flex: 1; }
+    .person-name { font-size: 18px; font-weight: 700; color: #0d2b5e; }
+    .person-tag  { font-size: 13px; font-weight: 600; margin-top: 3px; }
+    .tag-member  { color: #1565C0; }
+    .tag-dep-ok  { color: #2e7d32; }
+    .tag-dep-block { color: #c62828; }
+    .tag-dep-noDob { color: #7a5c00; }
+
+    .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat-card { background: #f0f4f8; border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-num { font-size: 32px; font-weight: 700; color: #1565C0; }
+    .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .area-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .area-table th { background: #1565C0; color: white; padding: 10px 14px; text-align: left; font-size: 14px; }
+    .area-table td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 15px; }
+    .area-table tr:last-child td { border-bottom: none; }
+    .area-table tr:nth-child(even) td { background: #f8fafc; }
+    .bar { height: 10px; background: #1565C0; border-radius: 5px; min-width: 4px; }
+
+    #admin-tap { position: fixed; bottom: 0; right: 0; width: 60px; height: 60px; z-index: 0; }
+
+    .num-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 10px auto 4px; max-width: 520px; }
+    .num-pill input[type="radio"] { display: none; }
+    .num-pill label { display: inline-block; min-width: 70px; padding: 14px 20px; border-radius: 14px; border: 2px solid #1565C0; color: #1565C0; font-size: 20px; font-weight: 700; cursor: pointer; text-align: center; transition: background 0.15s, color 0.15s; user-select: none; }
+    .num-pill input[type="radio"]:checked + label { background: #1565C0; color: white; }
   </style>
 </head>
 <body>
 
-<video id="video" autoplay playsinline muted></video>
-<canvas id="canvas"></canvas>
-
-<div id="ui">
-  <div id="scan-box">
-    <div class="corner tl"></div>
-    <div class="corner tr"></div>
-    <div class="corner bl"></div>
-    <div class="corner br"></div>
-    <div id="scan-line"></div>
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="card">
+    <img src="https://i.imgur.com/iexv8G2.png" class="logo" alt="High Lane Club" style="width:240px;">
+    <h1>Welcome to the High Lane Club</h1>
+    <p class="subtitle">Please select how you would like to check in today.</p>
+    <p class="subtitle">Members will have the option to register and pay for guests.</p>
+    <p class="subtitle">Guests paying for themselves should click <b>Guest Check In</b>.</p>
+    <button class="btn btn-primary" onclick="showScreen('screen-member-1')">Member Check In</button>
+    <button class="btn btn-outline" onclick="showScreen('screen-guest')">Guest Check In</button>
   </div>
-  <p id="label">Align QR code inside the box</p>
-  <p id="sublabel">Hold steady &mdash; scans automatically</p>
-  <button id="cancel-btn" onclick="cancelScan()">&#8592; Cancel / Type Name</button>
+</div>
+<div id="admin-tap" onclick="adminTap()"></div>
+
+<!-- MEMBER STEP 1: Lookup -->
+<div id="screen-member-1" class="screen">
+  <div class="card">
+    <button class="btn-home" onclick="goHome()">&#8592; Home</button>
+    <div class="step-label">Member Check-In &middot; Step 1 of 3</div>
+    <h2>Who's checking in?</h2>
+    <p class="subtitle">Scan your member QR code, or type your name or Member ID.</p>
+    <button class="btn btn-primary" onclick="openScanner()">Scan QR Code</button>
+    <div class="divider">or enter your name / Member ID</div>
+    <input id="nameInput" type="text" placeholder="First Last (any order) or Member ID" autocomplete="off" autocorrect="off" autocapitalize="off">
+    <button class="btn btn-primary" onclick="checkMember()">Look Me Up</button>
+    <div id="memberResult"></div>
+  </div>
 </div>
 
-<div id="success">
-  <div class="tick">&#10003;</div>
-  <div>QR Code Found!</div>
-  <div id="found-text" style="font-size:16px; color:#90caf9;"></div>
+<!-- MEMBER STEP 1b: Who is checking in from this account -->
+<div id="screen-member-select" class="screen">
+  <div class="card">
+    <button class="btn-home" onclick="goHome()">&#8592; Home</button>
+    <div class="step-label">Member Check-In &middot; Step 2 of 3</div>
+    <h2 id="accountWelcome">Select who is checking in</h2>
+    <p class="subtitle" style="margin-bottom:8px;">Tap each person checking in today.</p>
+    <div class="person-list" id="personList"></div>
+    <div id="delinquentNotice"></div>
+    <div id="dobReminder"></div>
+    <div id="selectError" style="margin-top:8px;"></div>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="confirmSelection()">Continue</button>
+  </div>
 </div>
 
-<div id="error-screen">
-  <h2>Camera Access Needed</h2>
-  <p id="error-msg">
-    Please tap <b>Allow</b> when Safari asks for camera access.<br><br>
-    If you already denied it, go to:<br>
-    <b>Settings &rarr; Safari &rarr; Camera</b><br>
-    and set it to <b>Allow</b>, then tap Try Again.
-  </p>
-  <button class="retry-btn" onclick="startCamera()">Try Again</button>
-  <button class="back-btn"  onclick="cancelScan()">Type Name Instead</button>
+<!-- MEMBER STEP 2: Areas + guests -->
+<div id="screen-member-2" class="screen">
+  <div class="card">
+    <button class="btn-home" onclick="goHome()">&#8592; Home</button>
+    <div class="step-label">Member Check-In &middot; Step 2 of 3</div>
+    <h2 id="welcomeName">Welcome!</h2>
+    <h3>Guests with you today?</h3>
+    <div class="num-grid">
+      <span class="num-pill"><input type="radio" name="guestCount" id="gc0" value="0" checked><label for="gc0">0</label></span>
+      <span class="num-pill"><input type="radio" name="guestCount" id="gc1" value="1"><label for="gc1">1</label></span>
+      <span class="num-pill"><input type="radio" name="guestCount" id="gc2" value="2"><label for="gc2">2</label></span>
+      <span class="num-pill"><input type="radio" name="guestCount" id="gc3" value="3"><label for="gc3">3</label></span>
+      <span class="num-pill"><input type="radio" name="guestCount" id="gc3plus" value="4"><label for="gc3plus">3+</label></span>
+    </div>
+    <h3>Which area(s) are you using today?<br>
+      <span style="font-weight:400; font-size:15px; color:#94a3b8;">Check all that apply</span>
+    </h3>
+    <div class="checkbox-grid" id="memberAreas">
+      <span class="checkbox-pill"><input type="checkbox" id="ma-pool"  value="Pool">       <label for="ma-pool">Pool</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ma-ten"   value="Tennis">     <label for="ma-ten">Tennis</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ma-pick"  value="Pickleball"> <label for="ma-pick">Pickleball</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ma-bowl"  value="Bowling">    <label for="ma-bowl">Bowling</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ma-event" value="Event">      <label for="ma-event">Event</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ma-other" value="Other">      <label for="ma-other">Other</label></span>
+    </div>
+    <button class="btn btn-primary" style="margin-top:24px;" onclick="submitCheckin()">Continue</button>
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<!-- MEMBER STEP 3: Guest names -->
+<div id="screen-member-3" class="screen">
+  <div class="card">
+    <button class="btn-home" onclick="goHome()">&#8592; Home</button>
+    <div class="step-label">Member Check-In &middot; Step 3 of 3</div>
+    <h2>Guest Names</h2>
+    <p class="subtitle">Enter the full name of each guest.</p>
+    <div id="guestNameInputs"></div>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="finalizeCheckin()">Pay Now or Use Pass</button>
+  </div>
+</div>
+
+<!-- PASS SELECTION -->
+<div id="screen-pass" class="screen">
+  <div class="card">
+    <button class="btn-home" onclick="goHome()">&#8592; Home</button>
+    <div class="step-label">Guest Check-In &middot; Payment</div>
+    <h2>Guest Pass Options</h2>
+    <p class="subtitle" id="passGuestCount" style="margin-bottom:8px;"></p>
+    <div id="passOptions" style="display:flex;flex-direction:column;gap:14px;margin:20px auto;max-width:480px;"></div>
+    <div id="passConfirmWrap" style="display:none;margin-top:4px;">
+      <button class="btn btn-primary" onclick="confirmPassSelection()">Confirm Selection</button>
+    </div>
+    <div id="passError" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- SIGN UP -->
+<div id="screen-signup" class="screen">
+  <div class="card">
+    <button class="btn-home" onclick="goHome()">&#8592; Home</button>
+    <div class="step-label">Not Found</div>
+    <h2>Sign Up for Membership</h2>
+    <p class="subtitle">We couldn't find your name. Fill in your details and we'll follow up.</p>
+    <input id="signupEmail" type="email" placeholder="Email address" autocomplete="off">
+    <input id="signupPhone" type="tel" placeholder="Phone number" autocomplete="off">
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="submitSignup()">Submit</button>
+    <button class="btn btn-outline" onclick="goHome()">Cancel</button>
+  </div>
+</div>
+
+<!-- GUEST -->
+<div id="screen-guest" class="screen">
+  <div class="card">
+    <button class="btn-home" onclick="goHome()">&#8592; Home</button>
+    <div class="step-label">Guest Check-In</div>
+    <h2>Guest Check-In</h2>
+    <p class="subtitle">Please enter your details to continue to payment.</p>
+    <input id="guestName" type="text" placeholder="Your first and last name" autocomplete="off">
+    <input id="guestMember" type="text" placeholder="Member you are with (optional)" autocomplete="off">
+    <h3>Number of guests paying?</h3>
+    <div class="num-grid">
+      <span class="num-pill"><input type="radio" name="guestCountGuest" id="gcg1" value="1" checked><label for="gcg1">1</label></span>
+      <span class="num-pill"><input type="radio" name="guestCountGuest" id="gcg2" value="2"><label for="gcg2">2</label></span>
+      <span class="num-pill"><input type="radio" name="guestCountGuest" id="gcg3" value="3"><label for="gcg3">3</label></span>
+      <span class="num-pill"><input type="radio" name="guestCountGuest" id="gcgf" value="4"><label for="gcgf">Family</label></span>
+    </div>
+    <h3>Which area(s) are you using today?<br>
+      <span style="font-weight:400; font-size:15px; color:#94a3b8;">Check all that apply</span>
+    </h3>
+    <div class="checkbox-grid" id="guestAreas">
+      <span class="checkbox-pill"><input type="checkbox" id="ga-pool"    value="Pool">       <label for="ga-pool">Pool</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ga-ten"     value="Tennis">     <label for="ga-ten">Tennis</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ga-pick"    value="Pickleball"> <label for="ga-pick">Pickleball</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ga-bowl"    value="Bowling">    <label for="ga-bowl">Bowling</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ga-event"   value="Event">      <label for="ga-event">Event</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ga-pilates" value="Pilates">    <label for="ga-pilates">Pilates</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ga-dance"   value="Dance">      <label for="ga-dance">Dance</label></span>
+      <span class="checkbox-pill"><input type="checkbox" id="ga-other"   value="Other">      <label for="ga-other">Other</label></span>
+    </div>
+    <button class="btn btn-primary" style="margin-top:24px;" onclick="submitGuest()">Continue to Payment</button>
+    <button class="btn btn-outline" onclick="goHome()">Cancel</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="screen-success" class="screen">
+  <div class="card">
+    <div style="font-size:86px; margin-bottom:24px;">&#10003;</div>
+    <h2 style="color:#1b5e20; font-size:34px;">You're checked in!</h2>
+    <p id="successMsg" style="font-size:20px; color:#2e7d32; margin-top:14px; line-height:1.6;"></p>
+    <a id="paymentBtn" href="#" target="_blank"
+       style="display:none; margin:24px auto 0; max-width:400px; padding:22px 24px;
+              background:#1565C0; color:white; font-size:22px; font-weight:700;
+              border-radius:14px; text-decoration:none; text-align:center; cursor:pointer;">
+      Tap Here to Pay &#8594;
+    </a>
+    <p id="paymentCountdownMsg" style="font-size:17px; color:#555; margin-top:18px; display:none;">
+      Returning to home in <b id="paymentCountdown">8</b> seconds...
+    </p>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="screen-admin-login" class="screen">
+  <div class="card" style="max-width:380px;">
+    <h2>Admin Access</h2>
+    <p class="subtitle">Enter the admin password to continue.</p>
+    <input id="adminPassword" type="password" placeholder="Password" autocomplete="off">
+    <div id="adminLoginError" style="color:#c62828; font-size:14px; margin-top:8px;"></div>
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="checkAdminPassword()">Sign In</button>
+    <button class="btn btn-outline" onclick="goHome()">Cancel</button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="screen-admin" class="screen">
+  <div class="card">
+    <div class="admin-header">
+      <div>
+        <div class="step-label">Admin Dashboard</div>
+        <h2 style="margin-bottom:0;">Today's Activity</h2>
+        <div id="adminDate" style="font-size:14px; color:#64748b; margin-top:4px;"></div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" style="margin:0; padding:10px 18px; font-size:14px; width:auto;" onclick="loadAdminData()">Refresh</button>
+        <button class="btn btn-outline" style="margin:0; padding:10px 18px; font-size:14px; width:auto;" onclick="goHome()">Exit</button>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="stat-total">--</div><div class="stat-label">Total People</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-checkins">--</div><div class="stat-label">Check-ins</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-members">--</div><div class="stat-label">Members</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-guests">--</div><div class="stat-label">Guests</div></div>
+    </div>
+    <h3 style="margin-bottom:12px;">Area Usage Today</h3>
+    <table class="area-table">
+      <thead><tr><th>Area</th><th>Count</th><th>Bar</th></tr></thead>
+      <tbody id="areaTableBody">
+        <tr><td colspan="3" style="color:#94a3b8; text-align:center;">Loading...</td></tr>
+      </tbody>
+    </table>
+    <h3 style="margin-top:28px; margin-bottom:12px;">Daily Totals History</h3>
+    <div style="overflow-x:auto;">
+      <table class="area-table" id="historyTable">
+        <thead>
+          <tr>
+            <th>Date</th><th>Members</th><th>Guests</th><th>Payments</th>
+            <th>Pool</th><th>Tennis</th><th>Pickleball</th><th>Bowling</th>
+            <th>Event</th><th>Pilates</th><th>Dance</th><th>Other</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr><td colspan="12" style="color:#94a3b8; text-align:center;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="adminError" style="color:#c62828; font-size:14px; margin-top:12px;"></div>
+  </div>
+</div>
+
 <script>
+var ADMIN_PASSWORD      = 'hlc2026';
+var GITHUB_SCANNER_URL  = 'https://hlckiosk.github.io/hlc-scanner/';
 
-var video    = document.getElementById('video');
-var canvas   = document.getElementById('canvas');
-var ctx      = canvas.getContext('2d');
-var stream   = null;
-var scanning = false;
-var animId   = null;
+var selectedMember  = null;  // basic member info from findMember
+var accountData     = null;  // full household from getMemberAccount
+var checkedInPeople = [];    // names of people actually checking in
+var passBalance     = null;  // { singlePasses, familyPasses }
+var pendingGuests   = [];    // guest names waiting for pass decision
+var scannerWin      = null;
+var adminTapCount   = 0;
+var adminTapTimer   = null;
+var idleTimer       = null;
+var countdownTick   = null;
 
-/* Get the kiosk URL to return to — passed as ?origin=... */
-var params     = new URLSearchParams(window.location.search);
-var kioskOrigin = params.get('origin') || '';  // e.g. https://script.google.com
-var kioskUrl    = params.get('kiosk')  || '';  // full kiosk URL
+/* ---- SCREEN NAV ---- */
+function showScreen(id) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+  var target = document.getElementById(id);
+  target.classList.add('active');
+  void target.offsetHeight;
+  window.scrollTo(0, 0);
+}
 
-function startCamera() {
-  document.getElementById('error-screen').classList.remove('show');
+function goHome() { resetForm(); showScreen('screen-home'); }
 
-  navigator.mediaDevices.getUserMedia({
-    video: {
-      facingMode: 'user',          // front camera for kiosk
-      width:  { ideal: 1280 },
-      height: { ideal: 720 }
-    },
-    audio: false
-  })
-  .then(function(s) {
-    stream   = s;
-    scanning = true;
-    video.srcObject = s;
-    video.play();
-    video.addEventListener('loadedmetadata', function() {
-      scanLoop();
-    });
-  })
-  .catch(function(err) {
-    console.error(err.name, err.message);
-    var msg = document.getElementById('error-msg');
-    if (err.name === 'NotAllowedError') {
-      msg.innerHTML = 'Camera access was denied.<br><br>Go to:<br><b>Settings &rarr; Safari &rarr; Camera</b><br>set to <b>Allow</b>, then tap Try Again.';
-    } else if (err.name === 'NotFoundError') {
-      msg.innerHTML = 'No camera found on this device.';
-    } else {
-      msg.innerHTML = 'Camera error: ' + err.message;
-    }
-    document.getElementById('error-screen').classList.add('show');
+/* ---- IDLE TIMER ---- */
+function resetTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(goHome, 60000);
+}
+document.addEventListener('click',      resetTimer);
+document.addEventListener('keypress',   resetTimer);
+document.addEventListener('touchstart', resetTimer);
+resetTimer();
+
+/* ---- KIOSK MODE ---- */
+history.pushState(null, null, window.location.href);
+window.addEventListener('popstate', function() { history.pushState(null, null, window.location.href); });
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+if (navigator.wakeLock) {
+  var wakeLock = null;
+  function requestWakeLock() {
+    navigator.wakeLock.request('screen').then(function(wl) { wakeLock = wl; }).catch(function() {});
+  }
+  requestWakeLock();
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') requestWakeLock();
   });
 }
 
-function scanLoop() {
-  if (!scanning) return;
+/* ---- ADMIN TAP ---- */
+function adminTap() {
+  adminTapCount++;
+  clearTimeout(adminTapTimer);
+  if (adminTapCount >= 5) {
+    adminTapCount = 0;
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminLoginError').textContent = '';
+    showScreen('screen-admin-login');
+  } else {
+    adminTapTimer = setTimeout(function() { adminTapCount = 0; }, 3000);
+  }
+}
 
-  if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-    /* Only scan the centre region that maps to the on-screen guide box */
-    var vw   = video.videoWidth;
-    var vh   = video.videoHeight;
-    var size = Math.round(Math.min(vw, vh) * 0.70);
-    var sx   = Math.round((vw - size) / 2);
-    var sy   = Math.round((vh - size) / 2);
+function checkAdminPassword() {
+  var pw = document.getElementById('adminPassword').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('adminLoginError').textContent = '';
+    showScreen('screen-admin');
+    loadAdminData();
+  } else {
+    document.getElementById('adminLoginError').textContent = 'Incorrect password.';
+    document.getElementById('adminPassword').value = '';
+  }
+}
 
-    canvas.width  = size;
-    canvas.height = size;
-    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+/* ---- ADMIN DATA ---- */
+function loadAdminData() {
+  document.getElementById('adminDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('areaTableBody').innerHTML = '<tr><td colspan="3" style="color:#94a3b8;text-align:center;">Loading...</td></tr>';
+  document.getElementById('adminError').textContent = '';
+  google.script.run
+    .withSuccessHandler(renderAdminData)
+    .withFailureHandler(function() { document.getElementById('adminError').textContent = 'Error loading data.'; })
+    .getAdminStats();
+}
 
-    var imgData = ctx.getImageData(0, 0, size, size);
-    var result  = jsQR(imgData.data, size, size, { inversionAttempts: 'dontInvert' });
+function renderAdminData(data) {
+  document.getElementById('stat-total').textContent    = data.totalPeople   || 0;
+  document.getElementById('stat-checkins').textContent = data.totalCheckins || 0;
+  document.getElementById('stat-members').textContent  = data.memberPeople  || 0;
+  document.getElementById('stat-guests').textContent   = data.guestPeople   || 0;
 
-    if (result && result.data) {
-      onFound(result.data.trim());
-      return;
-    }
+  var areas = data.areas || {};
+  var keys  = Object.keys(areas).sort(function(a,b){ return areas[b]-areas[a]; });
+  var max   = keys.length > 0 ? areas[keys[0]] : 1;
+  var tbody = document.getElementById('areaTableBody');
+  if (!keys.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:#94a3b8;text-align:center;">No area data yet today.</td></tr>';
+  } else {
+    tbody.innerHTML = keys.map(function(area) {
+      var count = areas[area];
+      var w = Math.max(4, Math.round((count/max)*160));
+      return '<tr><td style="font-weight:600;">' + area + '</td><td style="font-weight:700;color:#1565C0;width:50px;">' + count + '</td><td style="width:180px;"><div class="bar" style="width:' + w + 'px;"></div></td></tr>';
+    }).join('');
   }
 
-  animId = requestAnimationFrame(scanLoop);
+  var history = (data.history || []).slice().reverse();
+  var htbody  = document.getElementById('historyTableBody');
+  if (!history.length) {
+    htbody.innerHTML = '<tr><td colspan="12" style="color:#94a3b8;text-align:center;">No history yet.</td></tr>';
+  } else {
+    htbody.innerHTML = history.map(function(h) {
+      return '<tr>' +
+        '<td style="font-weight:600;white-space:nowrap;">' + h.date     + '</td>' +
+        '<td style="text-align:center;">' + h.members  + '</td>' +
+        '<td style="text-align:center;">' + h.guests   + '</td>' +
+        '<td style="text-align:center;font-weight:700;color:#1565C0;">' + h.payments + '</td>' +
+        '<td style="text-align:center;">' + h.pool     + '</td>' +
+        '<td style="text-align:center;">' + h.tennis   + '</td>' +
+        '<td style="text-align:center;">' + h.pickle   + '</td>' +
+        '<td style="text-align:center;">' + h.bowling  + '</td>' +
+        '<td style="text-align:center;">' + h.event    + '</td>' +
+        '<td style="text-align:center;">' + h.pilates  + '</td>' +
+        '<td style="text-align:center;">' + h.dance    + '</td>' +
+        '<td style="text-align:center;">' + h.other    + '</td>' +
+        '</tr>';
+    }).join('');
+  }
 }
 
-function onFound(text) {
-  scanning = false;
-  cancelAnimationFrame(animId);
-  stopCamera();
-
-  document.getElementById('found-text').textContent = text;
-  document.getElementById('success').classList.add('show');
-
-  /* Send result back to the kiosk via postMessage AND via URL param fallback */
-  setTimeout(function() {
-    /* Method 1: postMessage to opener (works if popup) */
-    if (window.opener && !window.opener.closed) {
-      try {
-        window.opener.postMessage({ type: 'QR_RESULT', text: text }, '*');
-      } catch(e) {}
-      setTimeout(function() { window.close(); }, 300);
-      return;
-    }
-
-    /* Method 2: redirect back to kiosk URL with result as param */
-    if (kioskUrl) {
-      var sep = kioskUrl.indexOf('?') >= 0 ? '&' : '?';
-      window.location.href = kioskUrl + sep + 'qr=' + encodeURIComponent(text);
-      return;
-    }
-
-    /* Method 3: just close — user will type name */
-    window.close();
-  }, 800);
+/* ---- QR SCANNER ---- */
+function openScanner() {
+  var kioskUrl   = encodeURIComponent(window.location.href.split('?')[0]);
+  var scannerUrl = GITHUB_SCANNER_URL + '?kiosk=' + kioskUrl;
+  scannerWin = window.open(scannerUrl, 'hlc-scanner', 'width=500,height=850');
+  if (!scannerWin) {
+    document.getElementById('memberResult').innerHTML =
+      "<div class='result-box result-error'>Popup blocked. In Safari Settings, turn off Block Pop-ups, then try again.</div>";
+  }
+  window.addEventListener('message', onScanMessage);
 }
 
-function cancelScan() {
-  scanning = false;
-  cancelAnimationFrame(animId);
-  stopCamera();
+function onScanMessage(event) {
+  if (!event.data || event.data.type !== 'QR_RESULT') return;
+  window.removeEventListener('message', onScanMessage);
+  var text = event.data.text;
+  if (!text) return;
+  if (scannerWin && !scannerWin.closed) scannerWin.close();
+  scannerWin = null;
+  document.getElementById('nameInput').value = text;
+  document.getElementById('memberResult').innerHTML =
+    "<div class='result-box result-info'>Scanned: <b>" + text + "</b> &mdash; looking up...</div>";
+  checkMember();
+}
 
-  if (window.opener && !window.opener.closed) {
-    try { window.opener.postMessage({ type: 'QR_CANCEL' }, '*'); } catch(e) {}
-    window.close();
+function closeScanner() {
+  window.removeEventListener('message', onScanMessage);
+  if (scannerWin && !scannerWin.closed) scannerWin.close();
+  scannerWin = null;
+}
+
+/* ---- MEMBER LOOKUP ---- */
+function checkMember() {
+  var input    = document.getElementById('nameInput').value.trim();
+  var resultEl = document.getElementById('memberResult');
+  var words    = input.replace(/[^a-zA-Z0-9 ]/g,' ').split(/\s+/).filter(Boolean);
+  if (words.length < 1) {
+    resultEl.innerHTML = "<div class='result-box result-error'>Please enter your name or Member ID.</div>";
     return;
   }
-  if (kioskUrl) {
-    window.location.href = kioskUrl;
+  resultEl.innerHTML = "<div class='result-box result-info'>Looking up...</div>";
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r.found && (r.status === 'Active' || r.status === 'Delinquent' || r.status === 'delinquent')) {
+        selectedMember = r;
+        var isDelinquent = r.status === 'Delinquent' || r.status === 'delinquent';
+        resultEl.innerHTML = "<div class='result-box result-success'>Found! Loading your account...</div>";
+        google.script.run
+          .withSuccessHandler(function(acct) {
+            if (acct.found) {
+              accountData = acct;
+              buildPersonList(acct, isDelinquent);
+              showScreen('screen-member-select');
+            } else {
+              accountData = { found: true, id: r.id, m1name: r.name, m2name: '', status: r.status, deps: [] };
+              buildPersonList(accountData, isDelinquent);
+              showScreen('screen-member-select');
+            }
+          })
+          .withFailureHandler(function() {
+            accountData = { found: true, id: r.id, m1name: r.name, m2name: '', status: r.status, deps: [] };
+            buildPersonList(accountData, isDelinquent);
+            showScreen('screen-member-select');
+          })
+          .getMemberAccount(r.id);
+      } else if (r.found && r.status !== 'Active') {
+        resultEl.innerHTML = "<div class='result-box result-error'>Your membership is not currently active.<br>Please see staff.</div>" + "<button class='btn btn-outline' style='margin-top:16px;' onclick='goHome()'>&#8592; Go Back to Home</button>";
+      } else {
+        resultEl.innerHTML = "<div class='result-box result-error'>Member not found. Would you like to sign up?</div>";
+        setTimeout(function() { showScreen('screen-signup'); }, 1500);
+      }
+    })
+    .withFailureHandler(function() {
+      resultEl.innerHTML = "<div class='result-box result-error'>Connection error &mdash; please try again.</div>";
+    })
+    .findMember(input);
+}
+
+/* ---- BUILD PERSON SELECTION LIST ---- */
+function buildPersonList(acct, isDelinquent) {
+  document.getElementById('accountWelcome').textContent = 'Welcome! Who is checking in today?';
+  
+  // Show delinquent notice if applicable
+  var delinqEl = document.getElementById('delinquentNotice');
+  if (isDelinquent && delinqEl) {
+    delinqEl.innerHTML =
+      "<div style='background:#fff8e1;border:2px solid #f9a825;border-radius:12px;padding:16px 18px;margin-bottom:8px;text-align:left;'>" +
+        "<div style='font-size:15px;font-weight:700;color:#7a5c00;margin-bottom:6px;'>&#9888; Account Notice</div>" +
+        "<div style='font-size:14px;color:#7a5c00;line-height:1.6;'>Your account is 60 days or more past due. You are welcome to use the club today, but please bring your account to current status at your earliest convenience.</div>" +
+        "<div style='font-size:14px;color:#7a5c00;margin-top:8px;'>For questions or to make a payment, please contact us at <strong>finance@highlaneclub.com</strong>.</div>" +
+      "</div>";
+  } else if (delinqEl) {
+    delinqEl.innerHTML = '';
+  }
+  var list = document.getElementById('personList');
+  list.innerHTML = '';
+
+  // Member 1
+  if (acct.m1name) {
+    list.appendChild(makePersonCard('m1', acct.m1name, 'member', null));
+  }
+  // Member 2
+  if (acct.m2name) {
+    list.appendChild(makePersonCard('m2', acct.m2name, 'member', null));
+  }
+  // Dependents
+  (acct.deps || []).forEach(function(dep, idx) {
+    var type = 'dep';
+    var age  = dep.age;
+    var dob  = dep.dob;
+    list.appendChild(makePersonCard('dep_' + idx, dep.name, type, age, dob));
+  });
+
+  document.getElementById('selectError').innerHTML = '';
+
+  // QR code reminder if any dependent is missing a birthdate
+  var missingDeps = (acct.deps || []).filter(function(d) { return !d.dob; });
+  if (missingDeps.length) {
+    var updateUrl = 'https://script.google.com/macros/s/AKfycbyhfL9HqO08sd5lwMWImuENbBENLmAHcULYurQgCtK_cjcv0grTwUK7tkUVsB_LzdaF/exec?page=member-update&id=' + encodeURIComponent(acct.id);
+    var qrUrl     = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(updateUrl) + '&margin=6';
+    var depNames  = missingDeps.map(function(d) { return d.name; }).join(', ');
+    document.getElementById('dobReminder').innerHTML =
+      "<div style='background:#e8f0fe;border-left:4px solid #1565C0;border-radius:0 10px 10px 0;padding:14px 16px;margin-top:12px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;'>" +
+        "<div style='flex:1;min-width:160px;'>" +
+          "<div style='font-size:17px;font-weight:700;color:#0d2b5e;margin-bottom:8px;'>Reminder: Your account needs to be updated.</div>" +
+          "<div style='font-size:15px;color:#0d2b5e;line-height:1.6;margin-bottom:4px;'><strong>" + depNames + "</strong> " + (missingDeps.length > 1 ? "are" : "is") + " missing a date of birth.</div>" + "<div style='font-size:15px;color:#0d2b5e;font-weight:600;'>Scan the QR code with your phone to update now.</div>" +
+        "</div>" +
+        "<div style='text-align:center;flex-shrink:0;'>" +
+          "<img src='" + qrUrl + "' style='width:90px;height:90px;border-radius:8px;border:2px solid #1565C0;display:block;' />" +
+          "<div style='font-size:14px;color:#0d2b5e;margin-top:6px;font-weight:700;'>Scan to update</div>" + "<div style='font-size:13px;color:#0d2b5e;margin-top:3px;font-weight:600;'>Member ID: " + acct.id + "</div>" +
+        "</div>" +
+      "</div>";
+  } else {
+    document.getElementById('dobReminder').innerHTML = '';
+  }
+}
+
+function makePersonCard(id, name, type, age, dob) {
+  var card      = document.createElement('div');
+  var needsAdult = false;
+  var tag       = '';
+  var tagClass  = '';
+
+  if (type === 'member') {
+    tag      = 'Member';
+    tagClass = 'tag-member';
+  } else {
+    if (age !== null && age !== undefined && age < 12) {
+      needsAdult = true;
+    } else if (age === null || age === undefined) {
+      needsAdult = true;
+    }
+    tag      = age !== null && age !== undefined ? 'Dependent · Age ' + age : 'Dependent';
+    tagClass = 'tag-dep-ok';
+  }
+
+  card.className = 'person-card';
+  card.dataset.personId   = id;
+  card.dataset.personName = name;
+  card.dataset.needsAdult = needsAdult ? '1' : '0';
+
+  var cb   = document.createElement('input');
+  cb.type  = 'checkbox';
+  cb.id    = 'person_' + id;
+
+  card.onclick = function() {
+    cb.checked = !cb.checked;
+    card.classList.toggle('selected', cb.checked);
+    if ((id === 'm1' || id === 'm2') && cb.checked) {
+      document.getElementById('selectError').innerHTML = '';
+    }
+  };
+  cb.onclick = function(e) {
+    e.stopPropagation();
+    card.classList.toggle('selected', cb.checked);
+    if ((id === 'm1' || id === 'm2') && cb.checked) {
+      document.getElementById('selectError').innerHTML = '';
+    }
+  };
+
+  var info = document.createElement('div');
+  info.className = 'person-info';
+  info.innerHTML = '<div class="person-name">' + name + '</div><div class="person-tag ' + tagClass + '">' + tag + '</div>';
+
+  card.appendChild(cb);
+  card.appendChild(info);
+  return card;
+}
+
+/* ---- CONFIRM SELECTION ---- */
+function confirmSelection() {
+  var checked = document.querySelectorAll('#personList input[type="checkbox"]:checked');
+  if (!checked.length) {
+    document.getElementById('selectError').innerHTML =
+      "<div class='result-box result-error'>Please select at least one person checking in.</div>";
     return;
   }
-  window.close();
-}
 
-function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach(function(t) { t.stop(); });
-    stream = null;
+  var hasMember    = false;
+  var hasNeedsAdult = false;
+  checked.forEach(function(cb) {
+    var card = cb.closest('.person-card');
+    if (card.dataset.personId === 'm1' || card.dataset.personId === 'm2') hasMember = true;
+    if (card.dataset.needsAdult === '1') hasNeedsAdult = true;
+  });
+
+  if (hasNeedsAdult && !hasMember) {
+    document.getElementById('selectError').innerHTML =
+      "<div class='result-box result-error'>This dependent must be checked in by a parent or guardian — either they are under 12 or no birthdate is on file.</div>";
+    return;
   }
-  video.srcObject = null;
+
+  checkedInPeople = [];
+  checked.forEach(function(cb) {
+    var card = cb.closest('.person-card');
+    checkedInPeople.push(card.dataset.personName);
+  });
+
+  var fc = checkedInPeople.length;
+  var displayName = accountData ? (accountData.m1name || selectedMember.name) : selectedMember.name;
+  document.getElementById('welcomeName').textContent = 'Welcome, ' + displayName + '!';
+  document.getElementById('selectError').innerHTML = '';
+  showScreen('screen-member-2');
+  // Show delinquent reminder on step 2 also
+  var dn2 = document.getElementById('delinquentNotice');
+  if (selectedMember && (selectedMember.status === 'Delinquent' || selectedMember.status === 'delinquent') && dn2) {
+    // Notice already shown on select screen, no need to repeat
+  }
 }
 
-/* Boot */
-if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-  document.getElementById('error-screen').classList.add('show');
-  document.getElementById('error-msg').textContent = 'Camera not supported. Please use Safari on iPad.';
-} else {
-  startCamera();
+/* ---- MEMBER STEP 2 ---- */
+function submitCheckin() {
+  var gcEl = document.querySelector('input[name="guestCount"]:checked');
+  var g    = gcEl ? parseInt(gcEl.value) || 0 : 0;
+  if (g > 0) {
+    var html = '';
+    for (var i = 0; i < g; i++) { html += '<input type="text" placeholder="Guest ' + (i+1) + ' full name">'; }
+    document.getElementById('guestNameInputs').innerHTML = html;
+    showScreen('screen-member-3');
+    return;
+  }
+  completeCheckin([], null);
+}
+
+/* ---- MEMBER STEP 3 ---- */
+function finalizeCheckin() {
+  var inputs = document.getElementById('guestNameInputs').querySelectorAll('input');
+  var names  = [];
+  for (var i = 0; i < inputs.length; i++) {
+    if (!inputs[i].value.trim()) { alert('Please enter all guest names.'); return; }
+    names.push(inputs[i].value.trim());
+  }
+  pendingGuests = names;
+  var g = names.length;
+
+  // Fetch pass balance
+  google.script.run
+    .withSuccessHandler(function(bal) {
+      passBalance = bal;
+      var hasSingle = bal.singlePasses >= g;
+      var hasFamily = bal.familyPasses >= 1 && g <= 6;
+      if (hasSingle || hasFamily) {
+        showPassScreen(g, hasSingle, hasFamily, bal);
+      } else {
+        completeCheckin(names, null); // no passes — go straight to payment
+      }
+    })
+    .withFailureHandler(function() {
+      completeCheckin(names, null);
+    })
+    .getPassBalance(selectedMember.id);
+}
+
+/* ---- PASS SELECTION SCREEN ---- */
+var selectedPassType   = null;
+var pendingGuestCount  = 0;
+
+function showPassScreen(guestCount, hasSingle, hasFamily, bal) {
+  selectedPassType  = null;
+  pendingGuestCount = guestCount;
+
+  document.getElementById('passGuestCount').textContent =
+    'You have ' + guestCount + ' guest' + (guestCount > 1 ? 's' : '') + ' checking in today. Select an option below.';
+
+  var opts = document.getElementById('passOptions');
+  opts.innerHTML = '';
+
+  if (hasFamily) {
+    var btn = document.createElement('button');
+    btn.className   = 'pass-option';
+    btn.id          = 'pass-opt-family';
+    btn.innerHTML   = '<div class="pass-badge">' + bal.familyPasses + ' available</div>' +
+      '<h3>Use Family Pass</h3>' +
+      '<p>Covers up to 6 guests from your household &mdash; 1 pass will be used.</p>';
+    btn.onclick = function() { selectPassOption('family'); };
+    opts.appendChild(btn);
+  }
+
+  if (hasSingle) {
+    var btn2 = document.createElement('button');
+    btn2.className  = 'pass-option';
+    btn2.id         = 'pass-opt-single';
+    btn2.innerHTML  = '<div class="pass-badge">' + bal.singlePasses + ' available</div>' +
+      '<h3>Use Single Passes</h3>' +
+      '<p>' + guestCount + ' single pass' + (guestCount > 1 ? 'es' : '') + ' will be used.</p>';
+    btn2.onclick = function() { selectPassOption('single'); };
+    opts.appendChild(btn2);
+  }
+
+  var btnPay = document.createElement('button');
+  btnPay.className  = 'pass-option';
+  btnPay.id         = 'pass-opt-pay';
+  btnPay.innerHTML  = '<h3>Pay Now</h3><p>Proceed to online payment for your guests.</p>';
+  btnPay.onclick    = function() { selectPassOption('pay'); };
+  opts.appendChild(btnPay);
+
+  document.getElementById('passConfirmWrap').style.display = 'none';
+  document.getElementById('passError').innerHTML = '';
+  showScreen('screen-pass');
+}
+
+function selectPassOption(type) {
+  selectedPassType = type;
+  // Highlight selected, reset others
+  var opts = ['family','single','pay'];
+  opts.forEach(function(o) {
+    var el = document.getElementById('pass-opt-' + o);
+    if (!el) return;
+    if (o === type) {
+      el.style.borderColor = '#0d2b5e';
+      el.style.background  = '#d0e0f8';
+    } else {
+      el.style.borderColor = '';
+      el.style.background  = '';
+    }
+  });
+  document.getElementById('passConfirmWrap').style.display = 'block';
+  document.getElementById('passConfirmWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function confirmPassSelection() {
+  if (!selectedPassType) return;
+  if (selectedPassType === 'pay') {
+    completeCheckin(pendingGuests, null);
+    return;
+  }
+  usePassAndCheckin(selectedPassType, pendingGuestCount);
+}
+
+function usePassAndCheckin(passType, guestCount) {
+  document.getElementById('passError').innerHTML =
+    "<div class='result-box result-info'>Processing...</div>";
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r.success) {
+        completeCheckin(pendingGuests, passType);
+      } else {
+        document.getElementById('passError').innerHTML =
+          "<div class='result-box result-error'>" + r.message + "</div>";
+      }
+    })
+    .withFailureHandler(function() {
+      document.getElementById('passError').innerHTML =
+        "<div class='result-box result-error'>Error using pass. Please try again.</div>";
+    })
+    .useGuestPass(selectedMember.id, passType, guestCount);
+}
+
+/* ---- COMPLETE CHECK-IN ---- */
+function completeCheckin(guestNames, passType) {
+  var gcEl  = document.querySelector('input[name="guestCount"]:checked');
+  var g     = guestNames.length || (gcEl ? parseInt(gcEl.value) || 0 : 0);
+  var fc    = checkedInPeople.length || 1;
+  var usedPass = passType !== null && passType !== undefined;
+  var link  = (g > 0 && !usedPass) ? getLink(g) : '';
+  var areas = getCheckedAreas('memberAreas');
+  var nameForRecord = checkedInPeople.join(', ') || (accountData ? accountData.m1name : selectedMember.name);
+  var passNote = usedPass ? passType + ' pass used' : '';
+
+  google.script.run
+    .withSuccessHandler(function() {
+      if (g > 0 && !usedPass) {
+        var btn = document.getElementById('paymentBtn');
+        btn.href = link;
+        btn.style.display = 'block';
+        document.getElementById('successMsg').textContent = 'All set! Please tap below to pay for your guest' + (g > 1 ? 's' : '') + '.';
+        document.getElementById('paymentCountdownMsg').style.display = 'block';
+        var secs = 30;
+        document.getElementById('paymentCountdown').textContent = secs;
+        clearInterval(countdownTick);
+        countdownTick = setInterval(function() {
+          secs--;
+          document.getElementById('paymentCountdown').textContent = secs;
+          if (secs <= 0) { clearInterval(countdownTick); goHome(); }
+        }, 1000);
+        showScreen('screen-success');
+      } else {
+        document.getElementById('paymentBtn').style.display = 'none';
+        document.getElementById('paymentCountdownMsg').style.display = 'none';
+        document.getElementById('successMsg').textContent = usedPass
+          ? 'Prepaid pass used. Have a great visit!'
+          : 'Have a great visit!';
+        showScreen('screen-success');
+        setTimeout(goHome, 5500);
+      }
+    })
+    .checkIn({
+      name:            nameForRecord,
+      memberId:        selectedMember.id,
+      status:          selectedMember.status,
+      familyCount:     fc,
+      areas:           areas,
+      guestCount:      g,
+      guestNames:      guestNames.join(', '),
+      paymentRequired: (g > 0 && !usedPass) ? 'Yes' : 'No',
+      paymentLink:     link,
+      passUsed:        passNote
+    });
+}
+
+/* ---- GUEST ---- */
+function submitGuest() {
+  var name = document.getElementById('guestName').value.trim();
+  if (!hasTwoNames(name)) { alert('Please enter first and last name.'); return; }
+  var gcgEl = document.querySelector('input[name="guestCountGuest"]:checked');
+  var count = gcgEl ? parseInt(gcgEl.value) || 1 : 1;
+  var link  = getLink(count);
+  var areas = getCheckedAreas('guestAreas');
+  google.script.run
+    .withSuccessHandler(function() {
+      var btn = document.getElementById('paymentBtn');
+      btn.href = link; btn.style.display = 'block';
+      document.getElementById('successMsg').textContent = 'Please tap below to complete your payment.';
+      document.getElementById('paymentCountdownMsg').style.display = 'block';
+      var secs = 30;
+      document.getElementById('paymentCountdown').textContent = secs;
+      clearInterval(countdownTick);
+      countdownTick = setInterval(function() {
+        secs--;
+        document.getElementById('paymentCountdown').textContent = secs;
+        if (secs <= 0) { clearInterval(countdownTick); goHome(); }
+      }, 1000);
+      showScreen('screen-success');
+    })
+    .checkInGuest({ name: name, areas: areas, withMember: document.getElementById('guestMember').value, type: count + ' guest(s)' });
+}
+
+/* ---- SIGN UP ---- */
+function submitSignup() {
+  google.script.run
+    .withSuccessHandler(function() {
+      document.getElementById('successMsg').textContent = "Sign-up submitted! We'll be in touch.";
+      showScreen('screen-success');
+      setTimeout(goHome, 3000);
+    })
+    .signUp({ name: document.getElementById('nameInput').value, email: document.getElementById('signupEmail').value, phone: document.getElementById('signupPhone').value });
+}
+
+/* ---- HELPERS ---- */
+function hasTwoNames(n) { return n.replace(/,/g,' ').split(/\s+/).filter(Boolean).length >= 2; }
+
+function getCheckedAreas(containerId) {
+  var checked = document.querySelectorAll('#' + containerId + ' input[type="checkbox"]:checked');
+  var vals = [];
+  for (var i = 0; i < checked.length; i++) vals.push(checked[i].value);
+  return vals.join(', ');
+}
+
+function getLink(n) {
+  if (n === 1) return "https://connect.intuit.com/pay/HLCSwimTeam25/scs-v1-b589579310514b4f9b64b51359a9775f6699dc18921e439293c686f1932d74a3ac395e104757499b9875ee4675936f2e?locale=EN_US&cta=copylistmultilink";
+  if (n === 2) return "https://connect.intuit.com/pay/HLCSwimTeam25/scs-v1-3729e5f4e7964f00a2840541b4dedbb7c191f9d1f51d4d8da66609bf3fb67870a005c8dc5c1a4b3fb88346093db3f8eb?locale=EN_US&cta=saveandcopylink";
+  return "https://connect.intuit.com/pay/HLCSwimTeam25/scs-v1-913cb13dfef7466389e1b80691ce70f88be183f51b9445ff9b1d51d567be5872d4a7536b1fe94e39aabbb95fb5465153?locale=EN_US&cta=copylistmultilink";
+}
+
+/* ---- RESET ---- */
+function clearCache() {
+  try { sessionStorage.clear(); localStorage.clear(); } catch(e) {}
+  var cbs = document.querySelectorAll('input[type="checkbox"]');
+  for (var i = 0; i < cbs.length; i++) cbs[i].checked = false;
+  var inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="password"]');
+  for (var i = 0; i < inputs.length; i++) inputs[i].value = '';
+}
+
+function resetForm() {
+  clearInterval(countdownTick);
+  closeScanner();
+  clearCache();
+  var gc0  = document.getElementById('gc0');
+  var gcg1 = document.getElementById('gcg1');
+  if (gc0)  gc0.checked  = true;
+  if (gcg1) gcg1.checked = true;
+  var mr = document.getElementById('memberResult');
+  if (mr) mr.innerHTML = '';
+  selectedMember  = null;
+  accountData     = null;
+  checkedInPeople = [];
+  passBalance     = null;
+  pendingGuests   = [];
+  selectedPassType  = null;
+  pendingGuestCount = 0;
+  var dr = document.getElementById('dobReminder');
+  if (dr) dr.innerHTML = '';
+  var dn = document.getElementById('delinquentNotice');
+  if (dn) dn.innerHTML = '';
+  var pl = document.getElementById('personList');
+  if (pl) pl.innerHTML = '';
+}
+
+/* ---- URL PARAM CHECK ---- */
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var admin  = params.get('admin');
+  var qr     = params.get('qr');
+  if (admin === '1') {
+    setTimeout(function() {
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('adminLoginError').textContent = '';
+      showScreen('screen-admin-login');
+    }, 300);
+  } else if (qr) {
+    setTimeout(function() {
+      showScreen('screen-member-1');
+      document.getElementById('nameInput').value = decodeURIComponent(qr);
+      document.getElementById('memberResult').innerHTML =
+        "<div class='result-box result-info'>Scanned: <b>" + decodeURIComponent(qr) + "</b> &mdash; looking up...</div>";
+      checkMember();
+    }, 500);
+  }
+})();
+
+/* ---- PC TEST SHIM ---- */
+if (typeof google === 'undefined') {
+  var _cb  = null;
+  var _run = {
+    withSuccessHandler: function(cb) { _cb = cb; return _run; },
+    withFailureHandler: function()   { return _run; },
+    findMember: function(arg) {
+      var cb = _cb; _cb = null;
+      var parts = (arg||'').replace(/[^a-zA-Z0-9 ]/g,' ').split(/\s+/).filter(Boolean);
+      var found = parts.length >= 1 && (!isNaN(arg) || parts.length >= 2);
+      setTimeout(function() {
+        if (cb) cb(found
+          ? { found:true, id:'101', name:'Smith Family', status:'Active' }
+          : { found:false });
+      }, 600);
+    },
+    getMemberAccount: function(id) {
+      var cb = _cb; _cb = null;
+      setTimeout(function() {
+        if (cb) cb({
+          found: true, id: id, status: 'Active',
+          m1name: 'Jane Smith', m2name: 'John Smith',
+          deps: [
+            { name: 'Emma Smith',  dob: '2008-03-15', age: 17 },
+            { name: 'Ryan Smith',  dob: '2014-07-22', age: 10 },
+            { name: 'Lily Smith',  dob: '',           age: null },
+          ]
+        });
+      }, 400);
+    },
+    checkIn:       function() { var cb=_cb; _cb=null; setTimeout(function(){ if(cb) cb(true); }, 400); },
+    checkInGuest:  function() { var cb=_cb; _cb=null; setTimeout(function(){ if(cb) cb(true); }, 400); },
+    signUp:        function() { var cb=_cb; _cb=null; setTimeout(function(){ if(cb) cb('Saved'); }, 400); },
+    getPassBalance: function(id) {
+      var cb = _cb; _cb = null;
+      setTimeout(function() { if(cb) cb({ found:true, singlePasses:3, familyPasses:1 }); }, 300);
+    },
+    useGuestPass: function(id, type, count) {
+      var cb = _cb; _cb = null;
+      setTimeout(function() { if(cb) cb({ success:true, remaining:2 }); }, 300);
+    },
+    getAdminStats: function() {
+      var cb=_cb; _cb=null;
+      setTimeout(function() {
+        if(cb) cb({totalPeople:47,totalCheckins:31,memberPeople:38,guestPeople:9,
+          areas:{Pool:22,Tennis:14,Pickleball:8,Bowling:5,Event:3,Pilates:2,Dance:1,Other:2},
+          history:[
+            {date:'Apr 10',members:32,guests:8,payments:4,pool:18,tennis:10,pickle:6,bowling:3,event:2,pilates:1,dance:1,other:1},
+            {date:'Apr 11',members:41,guests:12,payments:7,pool:22,tennis:14,pickle:8,bowling:5,event:3,pilates:2,dance:1,other:2}
+          ]});
+      }, 500);
+    }
+  };
+  window.google = { script: { run: _run } };
 }
 </script>
 </body>
